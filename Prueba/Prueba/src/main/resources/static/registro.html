@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+
+    <div class="card shadow-sm p-4" style="width: 100%; max-width: 400px;">
+        <h3 class="text-center mb-4">Crear Cuenta</h3>
+        <form id="form-registro">
+            <div class="mb-3">
+                <label class="form-label">Nombre de Usuario</label>
+                <input type="text" id="nombreUsuario" class="form-control" placeholder="Tu nombre" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Correo Electrónico</label>
+                <input type="email" id="email" class="form-control" placeholder="correo@ejemplo.com" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-3">Registrarse</button>
+            <div class="text-center">
+                <a href="login.html" class="text-decoration-none">¿Ya tienes cuenta? Inicia sesión</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("form-registro").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const usuario = {
+                nombreUsuario: document.getElementById("nombreUsuario").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            try {
+                // Apuntamos exacto a /api/auth/registro
+                const res = await fetch("http://localhost:8080/api/auth/registro", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(usuario)
+                });
+
+                if (res.ok) {
+                    alert("¡Usuario registrado con éxito como CLIENTE!");
+                    window.location.href = "login.html";
+                } else {
+                    const mensajeError = await res.text();
+                    alert("Error: " + mensajeError);
+                }
+            } catch (err) {
+                console.error("Error de conexión:", err);
+                alert("No se pudo conectar con el servidor.");
+            }
+        });
+    </script>
+</body>
+</html>
