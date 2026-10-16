@@ -2,6 +2,7 @@ package com.sena.adso.Prueba.controller;
 
 import com.sena.adso.Prueba.model.Usuario;
 import com.sena.adso.Prueba.repository.UsuarioRepository;
+import com.sena.adso.Prueba.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,9 @@ public class AuthController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private AuthService authService;
 
     @PostMapping("/registro")
     public ResponseEntity<?> registrarUsuario(@RequestBody Usuario usuario) {
@@ -41,5 +45,27 @@ public class AuthController {
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Correo o contraseña incorrectos.");
+    }
+
+    @PostMapping("/solicitar-recuperacion")
+    public ResponseEntity<String> solicitarRecuperacion(@RequestParam String email) {
+        boolean enviado = authService.solicitarRecuperacion(email);
+        if (enviado) {
+            return ResponseEntity.ok("Código enviado exitosamente a tu correo.");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El correo no se encuentra registrado.");
+    }
+
+    @PostMapping("/restablecer-password")
+    public ResponseEntity<String> restablecerPassword(
+            @RequestParam String email,
+            @RequestParam String codigo,
+            @RequestParam String nuevaPassword) {
+
+        boolean exito = authService.cambiarPasswordConCodigo(email, codigo, nuevaPassword);
+        if (exito) {
+            return ResponseEntity.ok("Contraseña restablecida exitosamente.");
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El código es incorrecto o ha expirado.");
     }
 }

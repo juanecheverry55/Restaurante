@@ -52,45 +52,45 @@
     </div>
 </div>
 
-<!-- MODAL PARA RECUPERAR CONTRASEÑA (2 PASOS SEGUROS) -->
+<!-- MODAL PARA RECUPERAR CONTRASEÑA (ENVÍO VÍA CORREO SMTP) -->
 <div class="modal-overlay" id="modalRecuperar">
     <div class="modal-content">
         <div class="modal-header">🔑 Recuperar Contraseña</div>
 
-        <!-- PASO 1: Ingresar correo para solicitar token -->
+        <!-- PASO 1: Ingresar correo para enviar el código al email -->
         <form id="formSolicitarToken">
             <div class="step-instruction">
-                Ingresa tu correo registrado para generar una clave temporal de recuperación.
+                Ingresa tu correo registrado para enviarte un código de recuperación a tu bandeja de entrada.
             </div>
             <div class="form-group">
                 <label>Correo Electrónico</label>
                 <input type="email" id="recuperarEmail" required placeholder="tu@correo.com">
             </div>
-            <button type="submit" class="btn-submit" style="background-color: #3498db;">Solicitar Clave</button>
+            <button type="submit" id="btnSolicitar" class="btn-submit" style="background-color: #3498db;">Enviar Código al Correo</button>
             <button type="button" class="btn-secondary" onclick="cerrarModalRecuperar()">Cancelar</button>
         </form>
 
-        <!-- PASO 2: Validar Token y cambiar clave -->
+        <!-- PASO 2: Validar Código enviado por correo y cambiar contraseña -->
         <form id="formConfirmarToken" style="display: none;">
             <div class="step-instruction" style="color: #27ae60;">
-                ¡Código generado! Ingresa la clave recibida y tu nueva contraseña.
+                Revisa tu correo electrónico e ingresa el código de 6 dígitos recibido junto a tu nueva contraseña.
             </div>
             <div class="form-group">
-                <label>Clave de Autorización (Token)</label>
-                <input type="text" id="tokenInput" required placeholder="Pega el token aquí">
+                <label>Código recibido por correo</label>
+                <input type="text" id="tokenInput" required placeholder="Ingresa el código aquí" maxlength="6">
             </div>
             <div class="form-group">
                 <label>Nueva Contraseña</label>
                 <input type="password" id="nuevaPasswordInput" minlength="4" required placeholder="Nueva contraseña">
             </div>
-            <button type="submit" class="btn-submit" style="background-color: #27ae60;">Cambiar Contraseña</button>
+            <button type="submit" class="btn-submit" style="background-color: #27ae60;">Restablecer Contraseña</button>
             <button type="button" class="btn-secondary" onclick="cerrarModalRecuperar()">Cancelar</button>
         </form>
     </div>
 </div>
 
 <script>
-    const API_BASE = "http://localhost:8080/api/usuarios";
+    const API_BASE = "http://localhost:8080/api/auth";
 
     // 1. AUTENTICACIÓN / LOGIN
     document.getElementById("formLogin").addEventListener("submit", async (e) => {
@@ -111,7 +111,7 @@
             if (res.ok) {
                 const usuario = await res.json();
 
-                // Guardamos el rol, email y nombre en el localStorage
+                // Guardamos rol, email y nombre en localStorage
                 localStorage.setItem("rol", usuario.rol);
                 localStorage.setItem("email", usuario.email || datosLogin.email);
                 localStorage.setItem("nombre", usuario.nombre || "");
@@ -124,9 +124,8 @@
                 }
 
             } else {
-                const errorData = await res.json().catch(() => null);
-                const mensaje = errorData ? errorData.error : "Credenciales incorrectas";
-                alert("Error: " + mensaje);
+                const mensaje = await res.text();
+                alert("Error: " + (mensaje || "Credenciales incorrectas"));
             }
         } catch (error) {
             console.error("Error de conexión:", error);
@@ -147,58 +146,61 @@
         document.getElementById("formConfirmarToken").reset();
     }
 
-    // 3. PASO 1: SOLICITAR TOKEN (/solicitar-recuperacion)
+    // 3. PASO 1: SOLICITAR CÓDIGO VÍA CORREO (/api/auth/solicitar-recuperacion)
     document.getElementById("formSolicitarToken").addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const email = document.getElementById("recuperarEmail").value.trim();
+        const btnSolicitar = document.getElementById("btnSolicitar");
+        
+        btnSolicitar.innerText = "Enviando correo...";
+        btnSolicitar.disabled = true;
 
         try {
-            const res = await fetch(`${API_BASE}/solicitar-recuperacion`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
+            const res = await fetch(`${API_BASE}/solicitar-recuperacion?email=${encodeURIComponent(email)}`, {
+                method: "POST"
             });
 
-            const data = await res.json();
+            const mensaje = await res.text();
 
             if (res.ok) {
-                alert("✅ Clave de recuperación generada.\n\nTu Token es:\n" + data.token);
+                alert("📩 " + mensaje);
                 
                 // Transición al Paso 2
                 document.getElementById("formSolicitarToken").style.display = "none";
                 document.getElementById("formConfirmarToken").style.display = "block";
-                document.getElementById("tokenInput").value = data.token; // Relleno automático para pruebas rápidas
             } else {
-                alert("❌ Error: " + (data.error || "No se pudo generar la solicitud"));
+                alert("❌ Error: " + mensaje);
             }
         } catch (error) {
             console.error("Error en la solicitud:", error);
             alert("⚠️ No se pudo conectar con el servidor.");
+        } finally {
+            btnSolicitar.innerText = "Enviar Código al Correo";
+            btnSolicitar.disabled = false;
         }
     });
 
-    // 4. PASO 2: CONFIRMAR RECUPERACIÓN (/confirmar-recuperacion)
+    // 4. PASO 2: RESTABLECER CONTRASEÑA CON CÓDIGO (/api/auth/restablecer-password)
     document.getElementById("formConfirmarToken").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const token = document.getElementById("tokenInput").value.trim();
+        const email = document.getElementById("recuperarEmail").value.trim();
+        const codigo = document.getElementById("tokenInput").value.trim();
         const nuevaPassword = document.getElementById("nuevaPasswordInput").value;
 
         try {
-            const res = await fetch(`${API_BASE}/confirmar-recuperacion`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, nuevaPassword })
+            const res = await fetch(`${API_BASE}/restablecer-password?email=${encodeURIComponent(email)}&codigo=${encodeURIComponent(codigo)}&nuevaPassword=${encodeURIComponent(nuevaPassword)}`, {
+                method: "POST"
             });
 
-            const data = await res.json();
+            const mensaje = await res.text();
 
             if (res.ok) {
-                alert("🎉 " + (data.mensaje || "Contraseña restablecida exitosamente"));
+                alert("🎉 " + mensaje);
                 cerrarModalRecuperar();
             } else {
-                alert("❌ Error: " + (data.error || "Token inválido o expirado"));
+                alert("❌ Error: " + mensaje);
             }
         } catch (error) {
             console.error("Error en confirmación:", error);

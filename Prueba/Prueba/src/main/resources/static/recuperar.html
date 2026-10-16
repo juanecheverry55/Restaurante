@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center vh-100">
+    <div class="container col-md-4">
+        <div class="card shadow p-4">
+            <h4 class="text-center mb-3">Recuperar Contraseña</h4>
+            
+            <!-- Paso 1: Enviar correo -->
+            <div id="paso1">
+                <div class="mb-3">
+                    <label class="form-label">Correo electrónico</label>
+                    <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required>
+                </div>
+                <button onclick="solicitarCodigo()" class="btn btn-primary w-100">Enviar Código</button>
+            </div>
+
+            <!-- Paso 2: Introducir código y nueva clave -->
+            <div id="paso2" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label">Código recibido en tu correo</label>
+                    <input type="text" id="codigo" class="form-control" placeholder="123456" maxlength="6" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nueva Contraseña</label>
+                    <input type="password" id="nuevaPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button onclick="restablecer()" class="btn btn-success w-100">Cambiar Contraseña</button>
+            </div>
+
+            <div id="mensaje" class="mt-3 text-center text-muted"></div>
+            
+            <div class="text-center mt-3">
+                <a href="login.html" class="text-decoration-none">Volver al inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function solicitarCodigo() {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                document.getElementById('mensaje').innerText = 'Por favor ingresa tu correo.';
+                return;
+            }
+
+            document.getElementById('mensaje').innerText = 'Enviando código...';
+
+            try {
+                const res = await fetch(`/api/auth/solicitar-recuperacion?email=${encodeURIComponent(email)}`, { method: 'POST' });
+                const texto = await res.text();
+                
+                document.getElementById('mensaje').innerText = texto;
+                if (res.ok) {
+                    document.getElementById('paso1').style.display = 'none';
+                    document.getElementById('paso2').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('mensaje').innerText = 'Error al conectar con el servidor.';
+            }
+        }
+
+        async function restablecer() {
+            const email = document.getElementById('email').value;
+            const codigo = document.getElementById('codigo').value;
+            const nuevaPassword = document.getElementById('nuevaPassword').value;
+
+            if (!codigo || !nuevaPassword) {
+                document.getElementById('mensaje').innerText = 'Por favor completa todos los campos.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/auth/restablecer-password?email=${encodeURIComponent(email)}&codigo=${encodeURIComponent(codigo)}&nuevaPassword=${encodeURIComponent(nuevaPassword)}`, { method: 'POST' });
+                const texto = await res.text();
+
+                document.getElementById('mensaje').innerText = texto;
+                if (res.ok) {
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                }
+            } catch (err) {
+                document.getElementById('mensaje').innerText = 'Error al procesar la solicitud.';
+            }
+        }
+    </script>
+</body>
+</html>

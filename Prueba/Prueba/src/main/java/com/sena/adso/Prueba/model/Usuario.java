@@ -23,7 +23,7 @@ public class Usuario {
     private String telefono;
     private String direccion;
 
-    // Campos para la recuperación segura de contraseña mediante Token
+    // Campos para la recuperación segura de contraseña mediante Código / Token
     @Column(name = "reset_token")
     private String resetToken;
 
@@ -48,7 +48,7 @@ public class Usuario {
         this.direccion = direccion;
     }
 
-    // Getters y Setters existentes
+    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -70,7 +70,7 @@ public class Usuario {
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
 
-    // Getters y Setters para Token de Recuperación
+    // Getters y Setters para Token / Código de Recuperación
     public String getResetToken() { return resetToken; }
     public void setResetToken(String resetToken) { this.resetToken = resetToken; }
 
