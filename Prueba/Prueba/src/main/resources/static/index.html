@@ -133,7 +133,20 @@
             color: #d4a44b !important;
         }
 
-        /* ADAPTACIÓN PARA PANTALLAS PEQUEÑAS */
+        /* ESTILO PARA EL SELECT DE MESA */
+        .select-mesa {
+            background-color: #2b1a1a;
+            color: #d4a44b;
+            border: 1px solid rgba(212, 164, 75, 0.5);
+            font-weight: bold;
+        }
+        .select-mesa:focus {
+            background-color: #1f3d2b;
+            color: #ffffff;
+            border-color: #d4a44b;
+            box-shadow: none;
+        }
+
         @media (max-width: 768px) {
             #sidebar {
                 position: fixed;
@@ -168,9 +181,8 @@
                         <span>📦 Pedidos y Mesas</span>
                     </button>
 
-                    <button class="sidebar-btn opacity-75" onclick="alert('El módulo de Inventario estará disponible próximamente.')">
-                        <span>📦 Inventario</span>
-                        <span class="badge bg-secondary">Próximo</span>
+                    <button class="sidebar-btn" id="btn-sec-inventario" onclick="mostrarSeccion('seccion-inventario')">
+                        <span>📋 Control Inventario</span>
                     </button>
 
                     <button class="sidebar-btn opacity-75" onclick="alert('El módulo de Resumen de Ventas estará disponible próximamente.')">
@@ -201,7 +213,6 @@
             
             <!-- SECCIÓN 1: GESTIÓN DE PLATOS (MENÚ) -->
             <div id="seccion-menu">
-                <!-- FORMULARIO DE AGREGAR / EDITAR PLATO -->
                 <div class="card card-custom shadow-sm mb-5">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 text-gold" id="titulo-form">➕ Agregar Nuevo Plato al Menú</h5>
@@ -236,14 +247,13 @@
                     </div>
                 </div>
 
-                <!-- CATÁLOGO DE PLATOS -->
                 <h4 class="mb-4 text-gold">📋 Platos Disponibles en la Carta</h4>
                 <div id="contenedor-platos" class="row">
                     <!-- Carga dinámica -->
                 </div>
             </div>
 
-            <!-- SECCIÓN 2: GESTIÓN DE PEDIDOS -->
+            <!-- SECCIÓN 2: GESTIÓN DE PEDIDOS Y MESAS -->
             <div id="seccion-pedidos" class="d-none">
                 <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
                     <table class="table table-dark table-hover align-middle mb-0">
@@ -254,10 +264,72 @@
                                 <th>Detalle del Pedido</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                <th>Mesa Asignada</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-pedidos">
+                            <!-- Carga dinámica -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: CONTROL DE INVENTARIO -->
+            <div id="seccion-inventario" class="d-none">
+                <div class="card card-custom shadow-sm mb-5">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-gold" id="titulo-form-inv">📋 Registrar Nuevo Insumo</h5>
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btn-cancelar-inv" onclick="limpiarFormularioInv()" style="display: none;">Cancelar Edición</button>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-inventario">
+                            <input type="hidden" id="inv-id">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Insumo / Ingrediente</label>
+                                    <input type="text" id="inv-nombre" class="form-control" placeholder="Ej: Carne de Res, Arroz, Aceite" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Cantidad Actual</label>
+                                    <input type="number" step="0.01" id="inv-cantidad" class="form-control" placeholder="Ej: 50" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold">Unidad Medida</label>
+                                    <select id="inv-unidad" class="form-select" required>
+                                        <option value="Kg">Kg</option>
+                                        <option value="Gramos">Gramos</option>
+                                        <option value="Litros">Litros</option>
+                                        <option value="Unidades">Unidades</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Stock Mínimo (Alerta)</label>
+                                    <input type="number" step="0.01" id="inv-minimo" class="form-control" placeholder="Ej: 10" required>
+                                </div>
+                            </div>
+                            <button type="submit" id="btn-guardar-inv" class="btn btn-gold mt-3 w-100 fw-bold">
+                                Guardar Insumo en Inventario
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <h4 class="mb-4 text-gold">📦 Existencias de Insumos</h4>
+                <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Insumo</th>
+                                <th>Cantidad Disponible</th>
+                                <th>Unidad</th>
+                                <th>Stock Mínimo</th>
+                                <th>Estado Stock</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-inventario">
                             <!-- Carga dinámica -->
                         </tbody>
                     </table>
@@ -271,9 +343,9 @@
     <script>
         const API_PLATOS = "http://localhost:8080/api/platos";
         const API_PEDIDOS = "http://localhost:8080/api/pedidos";
+        const API_INVENTARIO = "http://localhost:8080/api/inventario";
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Protección de acceso: valida sesión y rol de ADMIN
             const rol = localStorage.getItem("rol");
             if (!rol || rol !== "ADMIN") {
                 window.location.replace("login.html");
@@ -282,20 +354,21 @@
 
             cargarPlatos();
             cargarPedidos();
+            cargarInventario();
         });
 
-        // FUNCIÓN PARA ABRIR Y CERRAR (COLAPSAR) EL SIDEBAR
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("collapsed");
         }
 
-        // CONTROL DE NAVEGACIÓN ENTRE SECCIONES DESDE EL SIDEBAR
         function mostrarSeccion(idSeccion) {
             document.getElementById("seccion-menu").classList.add("d-none");
             document.getElementById("seccion-pedidos").classList.add("d-none");
+            document.getElementById("seccion-inventario").classList.add("d-none");
 
             document.getElementById("btn-sec-menu").classList.remove("active");
             document.getElementById("btn-sec-pedidos").classList.remove("active");
+            document.getElementById("btn-sec-inventario").classList.remove("active");
 
             document.getElementById(idSeccion).classList.remove("d-none");
 
@@ -307,6 +380,9 @@
             } else if (idSeccion === 'seccion-pedidos') {
                 document.getElementById("btn-sec-pedidos").classList.add("active");
                 tituloHeader.innerText = "📦 Gestión de Pedidos";
+            } else if (idSeccion === 'seccion-inventario') {
+                document.getElementById("btn-sec-inventario").classList.add("active");
+                tituloHeader.innerText = "📋 Control de Inventario";
             }
         }
 
@@ -316,26 +392,16 @@
             window.location.replace("login.html");
         }
 
+        /* LÓGICA DE PLATOS Y PEDIDOS */
         function formatearUrlImagen(imagenStr) {
-            if (!imagenStr || imagenStr.trim() === "") {
-                return "https://via.placeholder.com/300x200?text=Sin+Imagen";
-            }
-
+            if (!imagenStr || imagenStr.trim() === "") return "https://via.placeholder.com/300x200?text=Sin+Imagen";
             let url = imagenStr.trim();
-
-            if (url.startsWith("uploads/")) {
-                url = url.replace("uploads/", "");
-            }
-
+            if (url.startsWith("uploads/")) url = url.replace("uploads/", "");
             if (url.includes("imgur.com") && !url.includes("i.imgur.com")) {
                 const idImgur = url.split('/').pop().replace('a_', '');
                 return `https://i.imgur.com/${idImgur}.jpg`;
             }
-
-            if (url.startsWith("http://") || url.startsWith("https://")) {
-                return url;
-            }
-
+            if (url.startsWith("http://") || url.startsWith("https://")) return url;
             return `http://localhost:8080/uploads/${url}`;
         }
 
@@ -344,28 +410,19 @@
                 const res = await fetch(API_PLATOS);
                 if (!res.ok) throw new Error("Error al obtener platos");
                 const platos = await res.json();
-
                 const contenedor = document.getElementById("contenedor-platos");
                 contenedor.innerHTML = "";
-
                 if (platos.length === 0) {
                     contenedor.innerHTML = `<div class="col-12"><p class="text-light">No hay platos registrados en el menú.</p></div>`;
                     return;
                 }
-
                 platos.forEach(plato => {
-                    const imagenRecibida = plato.imagen || plato.imagenUrl || "";
-                    const urlImg = formatearUrlImagen(imagenRecibida);
+                    const urlImg = formatearUrlImagen(plato.imagen || plato.imagenUrl || "");
                     const platoJSON = JSON.stringify(plato).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
                     contenedor.innerHTML += `
                         <div class="col-md-4 mb-4">
                             <div class="card card-custom h-100 shadow-sm">
-                                <img src="${urlImg}" 
-                                     class="card-img-top" 
-                                     alt="${plato.nombre}" 
-                                     style="height: 200px; object-fit: cover;" 
-                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+Imagen';">
+                                <img src="${urlImg}" class="card-img-top" alt="${plato.nombre}" style="height: 200px; object-fit: cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+Imagen';">
                                 <div class="card-body d-flex flex-column justify-content-between">
                                     <div>
                                         <h5 class="card-title text-gold">${plato.nombre}</h5>
@@ -374,22 +431,15 @@
                                     <div>
                                         <p class="card-text text-gold fw-bold fs-5 mt-2">$${plato.precio}</p>
                                         <div class="d-flex gap-2 mt-2">
-                                            <button class="btn btn-warning btn-sm w-50 fw-bold text-dark" onclick='prepararEdicion(${platoJSON})'>
-                                                ✏️ Editar
-                                            </button>
-                                            <button class="btn btn-danger btn-sm w-50 fw-bold" onclick="eliminarPlato(${plato.id}, '${plato.nombre}')">
-                                                🗑️ Eliminar
-                                            </button>
+                                            <button class="btn btn-warning btn-sm w-50 fw-bold text-dark" onclick='prepararEdicion(${platoJSON})'>✏️ Editar</button>
+                                            <button class="btn btn-danger btn-sm w-50 fw-bold" onclick="eliminarPlato(${plato.id}, '${plato.nombre}')">🗑️ Eliminar</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
-            } catch (error) {
-                console.error("Error al cargar platos:", error);
-            }
+            } catch (error) { console.error(error); }
         }
 
         function prepararEdicion(plato) {
@@ -398,12 +448,10 @@
             document.getElementById("precio").value = plato.precio;
             document.getElementById("imagen").value = plato.imagen || plato.imagenUrl || "";
             document.getElementById("descripcion").value = plato.descripcion || "";
-
             document.getElementById("titulo-form").innerText = "✏️ Editar Plato #" + plato.id;
             document.getElementById("btn-guardar").innerText = "Actualizar Plato";
             document.getElementById("btn-guardar").className = "btn btn-warning mt-3 w-100 fw-bold text-dark";
             document.getElementById("btn-cancelar-edicion").style.display = "inline-block";
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -416,10 +464,8 @@
             document.getElementById("btn-cancelar-edicion").style.display = "none";
         }
 
-        // GUARDAR O ACTUALIZAR PLATO
         document.getElementById("form-plato").addEventListener("submit", async (e) => {
             e.preventDefault();
-
             const id = document.getElementById("plato-id").value;
             const plato = {
                 nombre: document.getElementById("nombre").value,
@@ -427,49 +473,22 @@
                 imagen: document.getElementById("imagen").value,
                 descripcion: document.getElementById("descripcion").value
             };
-
             const esEdicion = Boolean(id);
             const url = esEdicion ? `${API_PLATOS}/${id}` : API_PLATOS;
             const metodo = esEdicion ? "PUT" : "POST";
 
             try {
-                const res = await fetch(url, {
-                    method: metodo,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(plato)
-                });
-
-                if (res.ok) {
-                    alert(esEdicion ? "¡Plato actualizado con éxito!" : "¡Plato guardado con éxito!");
-                    limpiarFormulario();
-                    cargarPlatos();
-                } else {
-                    alert("Error al procesar la solicitud en el servidor.");
-                }
-            } catch (error) {
-                console.error("Error de conexión:", error);
-                alert("No se pudo conectar con el servidor.");
-            }
+                const res = await fetch(url, { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(plato) });
+                if (res.ok) { alert(esEdicion ? "¡Plato actualizado!" : "¡Plato guardado!"); limpiarFormulario(); cargarPlatos(); }
+            } catch (error) { console.error(error); }
         });
 
-        // ELIMINAR PLATO CON CONFIRMACIÓN
         async function eliminarPlato(id, nombre) {
-            if (confirm(`¿Estás seguro de que deseas eliminar el plato "${nombre}"?`)) {
+            if (confirm(`¿Eliminar plato "${nombre}"?`)) {
                 try {
-                    const res = await fetch(`${API_PLATOS}/${id}`, {
-                        method: "DELETE"
-                    });
-
-                    if (res.ok) {
-                        alert("Plato eliminado correctamente.");
-                        cargarPlatos();
-                    } else {
-                        alert("No se pudo eliminar el plato.");
-                    }
-                } catch (error) {
-                    console.error("Error al eliminar el plato:", error);
-                    alert("Error de conexión al intentar eliminar.");
-                }
+                    const res = await fetch(`${API_PLATOS}/${id}`, { method: "DELETE" });
+                    if (res.ok) { cargarPlatos(); }
+                } catch (error) { console.error(error); }
             }
         }
 
@@ -478,48 +497,45 @@
                 const res = await fetch(API_PEDIDOS);
                 if (!res.ok) throw new Error("Error al obtener pedidos");
                 const pedidos = await res.json();
-
                 const tabla = document.getElementById("tabla-pedidos");
                 tabla.innerHTML = "";
-
                 if (pedidos.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="6" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
+                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
                     return;
                 }
-
                 pedidos.forEach(p => {
                     const estado = (p.estado || "PENDIENTE").toUpperCase();
-                    
                     let badgeClass = "bg-warning text-dark";
                     let accionesHTML = "";
 
                     if (estado === "PENDIENTE") {
                         badgeClass = "bg-warning text-dark";
-                        accionesHTML = `
-                            <button class="btn btn-sm btn-primary me-1" onclick="cambiarEstadoPedido(${p.id}, 'EN_PREPARACION')">
-                                👨‍🍳 Enviar a Cocina
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">
-                                ❌ Cancelar
-                            </button>
-                        `;
+                        accionesHTML = `<button class="btn btn-sm btn-primary me-1" onclick="cambiarEstadoPedido(${p.id}, 'EN_PREPARACION')">👨‍🍳 Enviar a Cocina</button><button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">❌ Cancelar</button>`;
                     } else if (estado === "EN_PREPARACION") {
                         badgeClass = "bg-info text-dark";
-                        accionesHTML = `
-                            <button class="btn btn-sm btn-success me-1" onclick="cambiarEstadoPedido(${p.id}, 'ENTREGADO')">
-                                ✅ Marcar Entregado
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">
-                                ❌
-                            </button>
-                        `;
+                        accionesHTML = `<button class="btn btn-sm btn-success me-1" onclick="cambiarEstadoPedido(${p.id}, 'ENTREGADO')">✅ Marcar Entregado</button><button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">❌</button>`;
                     } else if (estado === "ENTREGADO") {
-                        badgeClass = "bg-success";
-                        accionesHTML = `<span class="text-success small fw-bold">✔ Completado</span>`;
+                        badgeClass = "bg-success"; accionesHTML = `<span class="text-success small fw-bold">✔ Completado</span>`;
                     } else if (estado === "CANCELADO") {
-                        badgeClass = "bg-danger";
-                        accionesHTML = `<span class="text-danger small fw-bold">✖ Cancelado</span>`;
+                        badgeClass = "bg-danger"; accionesHTML = `<span class="text-danger small fw-bold">✖ Cancelado</span>`;
                     }
+
+                    // Mesa actual del pedido
+                    const mesaActual = p.numeroMesa || "";
+
+                    // Desplegable interactivo para asignar mesa
+                    let selectMesaHTML = `
+                        <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
+                            <option value="" ${mesaActual === '' ? 'selected' : ''}>Sin asignar</option>
+                            <option value="Mesa 1" ${mesaActual === 'Mesa 1' ? 'selected' : ''}>Mesa 1</option>
+                            <option value="Mesa 2" ${mesaActual === 'Mesa 2' ? 'selected' : ''}>Mesa 2</option>
+                            <option value="Mesa 3" ${mesaActual === 'Mesa 3' ? 'selected' : ''}>Mesa 3</option>
+                            <option value="Mesa 4" ${mesaActual === 'Mesa 4' ? 'selected' : ''}>Mesa 4</option>
+                            <option value="Mesa 5" ${mesaActual === 'Mesa 5' ? 'selected' : ''}>Mesa 5</option>
+                            <option value="Barra" ${mesaActual === 'Barra' ? 'selected' : ''}>Barra</option>
+                            <option value="Para Llevar" ${mesaActual === 'Para Llevar' ? 'selected' : ''}>Para Llevar</option>
+                        </select>
+                    `;
 
                     tabla.innerHTML += `
                         <tr>
@@ -528,31 +544,138 @@
                             <td>${p.detallePlatos}</td>
                             <td class="text-gold fw-bold">$${p.total}</td>
                             <td><span class="badge ${badgeClass}">${estado.replace('_', ' ')}</span></td>
+                            <td style="min-width: 130px;">${selectMesaHTML}</td>
                             <td class="text-center">${accionesHTML}</td>
-                        </tr>
-                    `;
+                        </tr>`;
                 });
-            } catch (error) {
-                console.error("Error al cargar pedidos:", error);
-            }
+            } catch (error) { console.error(error); }
         }
 
         async function cambiarEstadoPedido(id, nuevoEstado) {
             try {
-                const res = await fetch(`${API_PEDIDOS}/${id}`, {
+                const res = await fetch(`${API_PEDIDOS}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado: nuevoEstado }) });
+                if (res.ok) cargarPedidos();
+            } catch (error) { console.error(error); }
+        }
+
+        async function asignarMesa(idPedido, nuevaMesa) {
+            try {
+                const res = await fetch(`${API_PEDIDOS}/${idPedido}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ estado: nuevoEstado })
+                    body: JSON.stringify({ numeroMesa: nuevaMesa })
+                });
+
+                if (!res.ok) {
+                    alert("No se pudo actualizar la mesa en el servidor.");
+                }
+            } catch (error) {
+                console.error("Error al asignar mesa:", error);
+                alert("Error de conexión al guardar la mesa.");
+            }
+        }
+
+        /* LÓGICA DE INVENTARIO */
+        async function cargarInventario() {
+            try {
+                const res = await fetch(API_INVENTARIO);
+                if (!res.ok) return;
+                const items = await res.json();
+                const tabla = document.getElementById("tabla-inventario");
+                tabla.innerHTML = "";
+
+                if (items.length === 0) {
+                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay insumos registrados en inventario.</td></tr>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const itemJSON = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                    const bajoStock = item.cantidad <= item.stockMinimo;
+                    const badgeStock = bajoStock 
+                        ? `<span class="badge bg-danger">⚠️ Stock Bajo</span>` 
+                        : `<span class="badge bg-success">Suficiente</span>`;
+
+                    tabla.innerHTML += `
+                        <tr>
+                            <td><strong>#${item.id}</strong></td>
+                            <td class="fw-bold">${item.nombreInsumo}</td>
+                            <td class="${bajoStock ? 'text-danger fw-bold fs-6' : 'text-light'}">${item.cantidad}</td>
+                            <td>${item.unidadMedida}</td>
+                            <td>${item.stockMinimo}</td>
+                            <td>${badgeStock}</td>
+                            <td class="text-center">
+                                <button class="btn btn-warning btn-sm me-1 fw-bold text-dark" onclick='prepararEdicionInv(${itemJSON})'>✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm fw-bold" onclick="eliminarInsumo(${item.id}, '${item.nombreInsumo}')">🗑️ Borrar</button>
+                            </td>
+                        </tr>`;
+                });
+            } catch (error) { console.error("Error al cargar inventario:", error); }
+        }
+
+        function prepararEdicionInv(item) {
+            document.getElementById("inv-id").value = item.id;
+            document.getElementById("inv-nombre").value = item.nombreInsumo;
+            document.getElementById("inv-cantidad").value = item.cantidad;
+            document.getElementById("inv-unidad").value = item.unidadMedida;
+            document.getElementById("inv-minimo").value = item.stockMinimo;
+
+            document.getElementById("titulo-form-inv").innerText = "✏️ Editar Insumo #" + item.id;
+            document.getElementById("btn-guardar-inv").innerText = "Actualizar Insumo";
+            document.getElementById("btn-guardar-inv").className = "btn btn-warning mt-3 w-100 fw-bold text-dark";
+            document.getElementById("btn-cancelar-inv").style.display = "inline-block";
+        }
+
+        function limpiarFormularioInv() {
+            document.getElementById("form-inventario").reset();
+            document.getElementById("inv-id").value = "";
+            document.getElementById("titulo-form-inv").innerText = "📋 Registrar Nuevo Insumo";
+            document.getElementById("btn-guardar-inv").innerText = "Guardar Insumo en Inventario";
+            document.getElementById("btn-guardar-inv").className = "btn btn-gold mt-3 w-100 fw-bold";
+            document.getElementById("btn-cancelar-inv").style.display = "none";
+        }
+
+        document.getElementById("form-inventario").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.getElementById("inv-id").value;
+            const insumo = {
+                nombreInsumo: document.getElementById("inv-nombre").value,
+                cantidad: parseFloat(document.getElementById("inv-cantidad").value),
+                unidadMedida: document.getElementById("inv-unidad").value,
+                stockMinimo: parseFloat(document.getElementById("inv-minimo").value)
+            };
+
+            const esEdicion = Boolean(id);
+            const url = esEdicion ? `${API_INVENTARIO}/${id}` : API_INVENTARIO;
+            const metodo = esEdicion ? "PUT" : "POST";
+
+            try {
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(insumo)
                 });
 
                 if (res.ok) {
-                    cargarPedidos();
+                    alert(esEdicion ? "¡Insumo actualizado con éxito!" : "¡Insumo registrado con éxito!");
+                    limpiarFormularioInv();
+                    cargarInventario();
                 } else {
-                    alert("No se pudo actualizar el estado del pedido.");
+                    alert("Error al procesar la solicitud de inventario.");
                 }
             } catch (error) {
-                console.error("Error al cambiar estado:", error);
-                alert("Error de conexión al intentar actualizar el pedido.");
+                console.error("Error al guardar insumo:", error);
+            }
+        });
+
+        async function eliminarInsumo(id, nombre) {
+            if (confirm(`¿Estás seguro de eliminar "${nombre}" del inventario?`)) {
+                try {
+                    const res = await fetch(`${API_INVENTARIO}/${id}`, { method: "DELETE" });
+                    if (res.ok) cargarInventario();
+                } catch (error) {
+                    console.error("Error al eliminar insumo:", error);
+                }
             }
         }
     </script>

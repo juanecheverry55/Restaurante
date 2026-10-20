@@ -17,16 +17,21 @@ public class Pedido {
     private String detallePlatos; // Ej: "Bandeja Paisa x1, Cazuela de mariscos x1"
     
     private Double total;
-    private String estado = "PENDIENTE"; // PENDIENTE, EN_PREPARACION, ENTREGADO
+    private String estado = "PENDIENTE"; // PENDIENTE, EN_PREPARACION, ENTREGADO, CANCELADO
+    
+    @Column(name = "numero_mesa")
+    private String numeroMesa; // Ej: "Mesa 1", "Mesa 2", "Barra", "Para Llevar"
+
     private LocalDateTime fecha = LocalDateTime.now();
 
     public Pedido() {
     }
 
-    public Pedido(String clienteEmail, String detallePlatos, Double total) {
+    public Pedido(String clienteEmail, String detallePlatos, Double total, String numeroMesa) {
         this.clienteEmail = clienteEmail;
         this.detallePlatos = detallePlatos;
         this.total = total;
+        this.numeroMesa = numeroMesa;
     }
 
     // Getters y Setters
@@ -45,7 +50,9 @@ public class Pedido {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
+    public String getNumeroMesa() { return numeroMesa; }
+    public void setNumeroMesa(String numeroMesa) { this.numeroMesa = numeroMesa; }
+
     public LocalDateTime getFecha() { return fecha; }
     public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
 }
-

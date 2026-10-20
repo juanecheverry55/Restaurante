@@ -33,13 +33,22 @@ public class PedidoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String nuevoEstado = body.get("estado");
-
+    public ResponseEntity<?> actualizarPedido(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return pedidoRepository.findById(id).map(pedido -> {
-            if (nuevoEstado != null && !nuevoEstado.isEmpty()) {
-                pedido.setEstado(nuevoEstado);
+            // Actualizar estado si viene en el JSON
+            if (body.containsKey("estado")) {
+                String nuevoEstado = body.get("estado");
+                if (nuevoEstado != null && !nuevoEstado.isEmpty()) {
+                    pedido.setEstado(nuevoEstado);
+                }
             }
+
+            // Actualizar número de mesa si viene en el JSON
+            if (body.containsKey("numeroMesa")) {
+                String nuevaMesa = body.get("numeroMesa");
+                pedido.setNumeroMesa(nuevaMesa);
+            }
+
             Pedido pedidoActualizado = pedidoRepository.save(pedido);
             return ResponseEntity.ok(pedidoActualizado);
         }).orElse(ResponseEntity.notFound().build());
