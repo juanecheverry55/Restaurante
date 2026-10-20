@@ -4,16 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Restaurante - Cliente</title>
+    <!-- CSS de Bootstrap y Estilos Corporativos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/estilos.css">
+    <style>
+        /* Adaptación de las tarjetas y contenedores al tema oscuro/glassmorphism */
+        .navbar-custom {
+            background: rgba(31, 61, 43, 0.85);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(212, 164, 75, 0.3);
+        }
+        .card-custom {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .card-custom .card-header {
+            background: rgba(43, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(212, 164, 75, 0.3);
+        }
+        .modal-content-custom {
+            background: rgba(30, 30, 30, 0.95);
+            color: white;
+            border: 1px solid rgba(212, 164, 75, 0.4);
+        }
+        .btn-gold {
+            background-color: #d4a44b;
+            color: #fff;
+            border: none;
+        }
+        .btn-gold:hover {
+            background-color: #b8892f;
+            color: #fff;
+        }
+        .text-gold {
+            color: #d4a44b !important;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
     <!-- PASO 1: BARRA SUPERIOR Y NAVEGACIÓN -->
-    <nav class="navbar navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-dark navbar-custom mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand fw-bold" href="#">🍽️ Menú para Clientes</a>
+            <a class="navbar-brand fw-bold text-gold" href="#">🍽️ Menú para Clientes</a>
             <div>
-                <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#modalCarrito">
+                <button class="btn btn-gold me-2" data-bs-toggle="modal" data-bs-target="#modalCarrito">
                     🛒 Carrito (<span id="cant-carrito">0</span>)
                 </button>
                 <button class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#modalPerfil" onclick="cargarDatosPerfil()">
@@ -26,15 +63,15 @@
 
     <div class="container">
         <!-- SECCIÓN DE SEGUIMIENTO DE PEDIDOS -->
-        <div class="card shadow-sm mb-4 border-0">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">📦 Mis Pedidos</h5>
+        <div class="card card-custom shadow-sm mb-4 border-0">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-gold">📦 Mis Pedidos</h5>
                 <button class="btn btn-sm btn-outline-light" onclick="cargarMisPedidos()">🔄 Actualizar Estado</button>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
                             <tr>
                                 <th># Pedido</th>
                                 <th>Detalle</th>
@@ -51,7 +88,7 @@
         </div>
 
         <!-- PASO 3: FILTRADO Y BÚSQUEDA DE PLATOS -->
-        <div class="card shadow-sm mb-4 border-0 p-3">
+        <div class="card card-custom shadow-sm mb-4 border-0 p-3">
             <div class="row g-3">
                 <div class="col-md-8">
                     <input type="text" id="input-buscar" class="form-control" placeholder="🔍 Buscar plato por nombre..." onkeyup="filtrarPlatos()">
@@ -69,7 +106,7 @@
         </div>
 
         <!-- CATÁLOGO DE PLATOS -->
-        <h3 class="mb-4 text-secondary">📋 Selecciona tus Platos</h3>
+        <h3 class="mb-4 text-gold">📋 Selecciona tus Platos</h3>
         <div id="contenedor-platos" class="row">
             <!-- Platos dinámicos -->
         </div>
@@ -78,9 +115,9 @@
     <!-- MODAL DEL CARRITO DE COMPRAS -->
     <div class="modal fade" id="modalCarrito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">🛒 Tu Pedido</h5>
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-gold">🛒 Tu Pedido</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-3">
@@ -89,9 +126,9 @@
                     </ul>
                     <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                         <span>Total:</span>
-                        <span id="total-carrito">$0</span>
+                        <span id="total-carrito" class="text-gold">$0</span>
                     </div>
-                    <button class="btn btn-success w-100 fw-bold" onclick="realizarPedido()">Confirmar Pedido</button>
+                    <button class="btn btn-gold w-100 fw-bold" onclick="realizarPedido()">Confirmar Pedido</button>
                 </div>
             </div>
         </div>
@@ -100,9 +137,9 @@
     <!-- PASO 2: MODAL MI PERFIL -->
     <div class="modal fade" id="modalPerfil" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title">👤 Mi Perfil</h5>
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-gold">👤 Mi Perfil</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -123,7 +160,7 @@
                             <label class="form-label fw-bold">Dirección de Entrega</label>
                             <input type="text" id="perfil-direccion" class="form-control" placeholder="Ej: Calle 10 #45-20">
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-gold w-100 fw-bold">Guardar Cambios</button>
                     </form>
                 </div>
             </div>
@@ -164,7 +201,7 @@
             contenedor.innerHTML = "";
 
             if (platos.length === 0) {
-                contenedor.innerHTML = `<div class="col-12"><p class="text-muted text-center py-4">No se encontraron platos con los criterios seleccionados.</p></div>`;
+                contenedor.innerHTML = `<div class="col-12"><p class="text-light text-center py-4">No se encontraron platos con los criterios seleccionados.</p></div>`;
                 return;
             }
 
@@ -173,16 +210,16 @@
                 
                 contenedor.innerHTML += `
                     <div class="col-md-4 mb-4">
-                        <div class="card h-100 shadow-sm">
+                        <div class="card card-custom h-100 shadow-sm">
                             <img src="${plato.imagen}" class="card-img-top" alt="${plato.nombre}" style="height: 200px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Sin+Imagen'">
                             <div class="card-body d-flex flex-column justify-content-between">
                                 <div>
-                                    <h5 class="card-title">${plato.nombre}</h5>
-                                    <p class="card-text text-muted small">${plato.descripcion || 'Sin descripción.'}</p>
+                                    <h5 class="card-title text-gold">${plato.nombre}</h5>
+                                    <p class="card-text text-light small">${plato.descripcion || 'Sin descripción.'}</p>
                                 </div>
                                 <div>
-                                    <p class="card-text text-success fw-bold fs-5 mb-2">$${plato.precio}</p>
-                                    <button class="btn btn-outline-primary w-100" onclick="agregarAlCarrito('${nombreEscapado}', ${plato.precio})">
+                                    <p class="card-text text-gold fw-bold fs-5 mb-2">$${plato.precio}</p>
+                                    <button class="btn btn-gold w-100" onclick="agregarAlCarrito('${nombreEscapado}', ${plato.precio})">
                                         ➕ Agregar al Carrito
                                     </button>
                                 </div>
@@ -221,7 +258,7 @@
                 const misPedidos = pedidos.filter(p => p.clienteEmail === correoCliente);
 
                 if (misPedidos.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="4" class="text-center text-muted p-3">No has realizado ningún pedido aún.</td></tr>`;
+                    tabla.innerHTML = `<tr><td colspan="4" class="text-center text-light p-3">No has realizado ningún pedido aún.</td></tr>`;
                     return;
                 }
 
@@ -248,7 +285,7 @@
                         <tr>
                             <td><strong>#${p.id}</strong></td>
                             <td>${p.detallePlatos}</td>
-                            <td class="text-success fw-bold">$${p.total}</td>
+                            <td class="text-gold fw-bold">$${p.total}</td>
                             <td><span class="badge ${badgeClass}">${textoFormateado}</span></td>
                         </tr>
                     `;
@@ -269,7 +306,7 @@
             lista.innerHTML = "";
 
             if (carrito.length === 0) {
-                lista.innerHTML = `<li class="list-group-item text-center text-muted">El carrito está vacío</li>`;
+                lista.innerHTML = `<li class="list-group-item bg-dark text-light border-secondary text-center">El carrito está vacío</li>`;
                 document.getElementById("total-carrito").innerText = "$0";
                 return;
             }
@@ -278,10 +315,10 @@
             carrito.forEach((item, index) => {
                 total += item.precio;
                 lista.innerHTML += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
                         <div>
                             <span>${item.nombre}</span>
-                            <span class="fw-bold ms-2 text-success">$${item.precio}</span>
+                            <span class="fw-bold ms-2 text-gold">$${item.precio}</span>
                         </div>
                         <button class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(${index})">✕</button>
                     </li>

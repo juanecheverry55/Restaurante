@@ -4,210 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Restaurante</title>
+    <!-- CSS de Bootstrap y Estilos Corporativos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/estilos.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card-login { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; position: relative; }
-        h2 { text-align: center; color: #333; margin-top: 0; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-submit { background-color: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
-        .btn-submit:hover { background-color: #219150; }
-        .btn-secondary { background-color: #7f8c8d; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; margin-top: 5px; }
-        .error-msg { color: #e74c3c; font-size: 14px; margin-top: 10px; text-align: center; display: none; }
-        .link-registro { text-align: center; margin-top: 15px; font-size: 14px; }
-        .link-registro a { color: #2980b9; text-decoration: none; cursor: pointer; }
-        
-        /* ESTILOS PARA LA MODAL DE RECUPERAR CONTRASEÑA */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 380px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #2c3e50; text-align: center; }
-        .step-instruction { font-size: 13px; color: #666; margin-bottom: 15px; text-align: center; line-height: 1.4; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1f3d2b 0%, #2b1a1a 100%);
+            color: #ffffff;
+        }
+        .card-custom {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 164, 75, 0.4);
+            border-radius: 12px;
+            color: white;
+            width: 100%;
+            max-width: 420px;
+        }
+        .btn-gold {
+            background-color: #d4a44b;
+            color: #1a1a1a;
+            border: none;
+            font-weight: bold;
+        }
+        .btn-gold:hover {
+            background-color: #b8892f;
+            color: #ffffff;
+        }
+        .text-gold {
+            color: #d4a44b !important;
+        }
+        a {
+            color: #d4a44b;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-<div class="card-login">
-    <h2>Iniciar Sesión</h2>
-    <form id="formLogin">
-        <div class="form-group">
-            <label>Correo Electrónico</label>
-            <input type="email" id="email" required placeholder="tu@correo.com">
-        </div>
-        <div class="form-group">
-            <label>Contraseña</label>
-            <input type="password" id="password" required placeholder="••••••••">
-        </div>
-        
-        <div style="text-align: right; margin-bottom: 10px;">
-            <a onclick="abrirModalRecuperar()" style="color: #e67e22; font-size: 13px; text-decoration: none; cursor: pointer; font-weight: bold;">¿Olvidaste tu contraseña?</a>
+    <div class="card card-custom shadow-lg p-4">
+        <div class="text-center mb-4">
+            <h2 class="text-gold fw-bold">🍽️ Restaurante</h2>
+            <p class="text-light small">Ingresa tus credenciales para acceder</p>
         </div>
 
-        <button type="submit" class="btn-submit">Ingresar</button>
-        <div class="error-msg" id="errorMsg">Correo o contraseña incorrectos</div>
-    </form>
-    
-    <div class="link-registro">
-        ¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a>
-    </div>
-</div>
-
-<!-- MODAL PARA RECUPERAR CONTRASEÑA (ENVÍO VÍA CORREO SMTP) -->
-<div class="modal-overlay" id="modalRecuperar">
-    <div class="modal-content">
-        <div class="modal-header">🔑 Recuperar Contraseña</div>
-
-        <!-- PASO 1: Ingresar correo para enviar el código al email -->
-        <form id="formSolicitarToken">
-            <div class="step-instruction">
-                Ingresa tu correo registrado para enviarte un código de recuperación a tu bandeja de entrada.
+        <form id="form-login">
+            <div class="mb-3">
+                <label for="email" class="form-label fw-bold">Correo Electrónico</label>
+                <input type="email" id="email" class="form-control bg-dark text-light border-secondary" placeholder="ejemplo@correo.com" required>
             </div>
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input type="email" id="recuperarEmail" required placeholder="tu@correo.com">
+
+            <div class="mb-3">
+                <label for="password" class="form-label fw-bold">Contraseña</label>
+                <input type="password" id="password" class="form-control bg-dark text-light border-secondary" placeholder="••••••••" required>
             </div>
-            <button type="submit" id="btnSolicitar" class="btn-submit" style="background-color: #3498db;">Enviar Código al Correo</button>
-            <button type="button" class="btn-secondary" onclick="cerrarModalRecuperar()">Cancelar</button>
+
+            <button type="submit" class="btn btn-gold w-100 py-2 mt-2">Iniciar Sesión</button>
         </form>
 
-        <!-- PASO 2: Validar Código enviado por correo y cambiar contraseña -->
-        <form id="formConfirmarToken" style="display: none;">
-            <div class="step-instruction" style="color: #27ae60;">
-                Revisa tu correo electrónico e ingresa el código de 6 dígitos recibido junto a tu nueva contraseña.
-            </div>
-            <div class="form-group">
-                <label>Código recibido por correo</label>
-                <input type="text" id="tokenInput" required placeholder="Ingresa el código aquí" maxlength="6">
-            </div>
-            <div class="form-group">
-                <label>Nueva Contraseña</label>
-                <input type="password" id="nuevaPasswordInput" minlength="4" required placeholder="Nueva contraseña">
-            </div>
-            <button type="submit" class="btn-submit" style="background-color: #27ae60;">Restablecer Contraseña</button>
-            <button type="button" class="btn-secondary" onclick="cerrarModalRecuperar()">Cancelar</button>
-        </form>
+        <div class="text-center mt-4">
+            <p class="small mb-1">
+                <a href="recuperar.html">¿Olvidaste tu contraseña?</a>
+            </p>
+            <p class="small mb-0">
+                ¿No tienes cuenta? <a href="registro.html" class="fw-bold">Regístrate aquí</a>
+            </p>
+        </div>
     </div>
-</div>
 
-<script>
-    const API_BASE = "http://localhost:8080/api/auth";
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_USUARIOS = "http://localhost:8080/api/usuarios";
 
-    // 1. AUTENTICACIÓN / LOGIN
-    document.getElementById("formLogin").addEventListener("submit", async (e) => {
-        e.preventDefault();
+        document.addEventListener("DOMContentLoaded", () => {
+            // Limpia credenciales previas para evitar re-redirecciones no deseadas
+            localStorage.clear();
+            sessionStorage.clear();
+        });
 
-        const datosLogin = {
-            email: document.getElementById("email").value,
-            password: document.getElementById("password").value
-        };
+        document.getElementById("form-login").addEventListener("submit", async (e) => {
+            e.preventDefault();
 
-        try {
-            const res = await fetch(`${API_BASE}/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosLogin)
-            });
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
 
-            if (res.ok) {
-                const usuario = await res.json();
+            try {
+                const res = await fetch(`${API_USUARIOS}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
 
-                // Guardamos rol, email y nombre en localStorage
-                localStorage.setItem("rol", usuario.rol);
-                localStorage.setItem("email", usuario.email || datosLogin.email);
-                localStorage.setItem("nombre", usuario.nombre || "");
+                if (res.ok) {
+                    const usuario = await res.json();
 
-                // Redirección según ROL
-                if (usuario.rol === "ADMIN") {
-                    window.location.href = "index.html";
+                    // Guardar los datos de sesión en localStorage
+                    localStorage.setItem("rol", usuario.rol);
+                    localStorage.setItem("email", usuario.email);
+                    localStorage.setItem("nombre", usuario.nombre || "");
+
+                    // Redirección según el rol retornado por la API
+                    if (usuario.rol === "ADMIN") {
+                        window.location.href = "index.html";
+                    } else if (usuario.rol === "CLIENTE") {
+                        window.location.href = "cliente.html";
+                    } else {
+                        alert("Rol de usuario desconocido.");
+                    }
                 } else {
-                    window.location.href = "cliente.html";
+                    const msj = await res.text();
+                    alert(msj || "Credenciales incorrectas. Revisa tu correo o contraseña.");
                 }
-
-            } else {
-                const mensaje = await res.text();
-                alert("Error: " + (mensaje || "Credenciales incorrectas"));
+            } catch (error) {
+                console.error("Error al iniciar sesión:", error);
+                alert("No se pudo conectar con el servidor. Verifica que Spring Boot esté en ejecución.");
             }
-        } catch (error) {
-            console.error("Error de conexión:", error);
-            alert("No se pudo conectar con el servidor.");
-        }
-    });
-
-    // 2. CONTROL DEL MODAL DE RECUPERACIÓN
-    function abrirModalRecuperar() {
-        document.getElementById("modalRecuperar").style.display = "flex";
-        document.getElementById("formSolicitarToken").style.display = "block";
-        document.getElementById("formConfirmarToken").style.display = "none";
-    }
-
-    function cerrarModalRecuperar() {
-        document.getElementById("modalRecuperar").style.display = "none";
-        document.getElementById("formSolicitarToken").reset();
-        document.getElementById("formConfirmarToken").reset();
-    }
-
-    // 3. PASO 1: SOLICITAR CÓDIGO VÍA CORREO (/api/auth/solicitar-recuperacion)
-    document.getElementById("formSolicitarToken").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const email = document.getElementById("recuperarEmail").value.trim();
-        const btnSolicitar = document.getElementById("btnSolicitar");
-        
-        btnSolicitar.innerText = "Enviando correo...";
-        btnSolicitar.disabled = true;
-
-        try {
-            const res = await fetch(`${API_BASE}/solicitar-recuperacion?email=${encodeURIComponent(email)}`, {
-                method: "POST"
-            });
-
-            const mensaje = await res.text();
-
-            if (res.ok) {
-                alert("📩 " + mensaje);
-                
-                // Transición al Paso 2
-                document.getElementById("formSolicitarToken").style.display = "none";
-                document.getElementById("formConfirmarToken").style.display = "block";
-            } else {
-                alert("❌ Error: " + mensaje);
-            }
-        } catch (error) {
-            console.error("Error en la solicitud:", error);
-            alert("⚠️ No se pudo conectar con el servidor.");
-        } finally {
-            btnSolicitar.innerText = "Enviar Código al Correo";
-            btnSolicitar.disabled = false;
-        }
-    });
-
-    // 4. PASO 2: RESTABLECER CONTRASEÑA CON CÓDIGO (/api/auth/restablecer-password)
-    document.getElementById("formConfirmarToken").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const email = document.getElementById("recuperarEmail").value.trim();
-        const codigo = document.getElementById("tokenInput").value.trim();
-        const nuevaPassword = document.getElementById("nuevaPasswordInput").value;
-
-        try {
-            const res = await fetch(`${API_BASE}/restablecer-password?email=${encodeURIComponent(email)}&codigo=${encodeURIComponent(codigo)}&nuevaPassword=${encodeURIComponent(nuevaPassword)}`, {
-                method: "POST"
-            });
-
-            const mensaje = await res.text();
-
-            if (res.ok) {
-                alert("🎉 " + mensaje);
-                cerrarModalRecuperar();
-            } else {
-                alert("❌ Error: " + mensaje);
-            }
-        } catch (error) {
-            console.error("Error en confirmación:", error);
-            alert("⚠️ No se pudo conectar con el servidor.");
-        }
-    });
-</script>
-
+        });
+    </script>
 </body>
 </html>

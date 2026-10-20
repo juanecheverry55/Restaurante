@@ -3,33 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Usuario</title>
+    <title>Registro de Usuario - Restaurante</title>
+    <!-- CSS de Bootstrap y Estilos Corporativos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+    <link rel="stylesheet" href="/css/estilos.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
 
-    <div class="card shadow-sm p-4" style="width: 100%; max-width: 400px;">
-        <h3 class="text-center mb-4">Crear Cuenta</h3>
+        .card-custom {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 164, 75, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            color: white;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn-gold {
+            background-color: #d4a44b;
+            color: #ffffff;
+            border: none;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            background-color: #b8892f;
+            color: #ffffff;
+        }
+
+        .text-gold {
+            color: #d4a44b !important;
+        }
+
+        .link-gold {
+            color: #d4a44b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .link-gold:hover {
+            color: #b8892f;
+            text-decoration: underline;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(212, 164, 75, 0.4);
+            color: #222;
+        }
+
+        .form-control:focus {
+            background: #ffffff;
+            border-color: #d4a44b;
+            box-shadow: 0 0 5px rgba(212, 164, 75, 0.5);
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+    <div class="card card-custom shadow-lg p-4">
+        <h3 class="text-center mb-4 text-gold fw-bold">📝 Crear Cuenta</h3>
         <form id="form-registro">
             <div class="mb-3">
-                <label class="form-label">Nombre de Usuario</label>
+                <label class="form-label fw-bold text-light">Nombre de Usuario</label>
                 <input type="text" id="nombreUsuario" class="form-control" placeholder="Tu nombre" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Correo Electrónico</label>
+                <label class="form-label fw-bold text-light">Correo Electrónico</label>
                 <input type="email" id="email" class="form-control" placeholder="correo@ejemplo.com" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Contraseña</label>
+                <label class="form-label fw-bold text-light">Contraseña</label>
                 <input type="password" id="password" class="form-control" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mb-3">Registrarse</button>
+            <button type="submit" class="btn btn-gold w-100 mb-3 py-2">Registrarse</button>
             <div class="text-center">
-                <a href="login.html" class="text-decoration-none">¿Ya tienes cuenta? Inicia sesión</a>
+                <a href="login.html" class="link-gold small">¿Ya tienes cuenta? Inicia sesión</a>
             </div>
         </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById("form-registro").addEventListener("submit", async (e) => {
             e.preventDefault();

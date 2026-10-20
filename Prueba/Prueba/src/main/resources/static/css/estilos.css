@@ -1,0 +1,58 @@
+/* ===== ESTILOS CORPORATIVOS GLOBALES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Fondo degradado corporativo */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1f3d2b, #2b1a1a, #7a1f1f);
+    background-attachment: fixed;
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+/* Colores de texto y enlaces */
+.text-gold {
+    color: #d4a44b !important;
+}
+
+.link-gold {
+    color: #d4a44b;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.link-gold:hover {
+    color: #b8892f;
+    text-decoration: underline;
+}
+
+/* Botón Dorado Personalizado */
+.btn-gold {
+    background-color: #d4a44b;
+    color: #ffffff;
+    border: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.btn-gold:hover {
+    background-color: #b8892f;
+    color: #ffffff;
+}
+
+/* Estilos para inputs */
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(212, 164, 75, 0.4);
+    color: #222;
+}
+
+.form-control:focus, .form-select:focus {
+    background: #ffffff;
+    border-color: #d4a44b;
+    box-shadow: 0 0 5px rgba(212, 164, 75, 0.5);
+}
