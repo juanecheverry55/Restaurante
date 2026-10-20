@@ -133,18 +133,30 @@
             color: #d4a44b !important;
         }
 
-        /* ESTILO PARA EL SELECT DE MESA */
-        .select-mesa {
+        /* SELECTS DE MESA Y MEDIO DE PAGO */
+        .select-mesa, .select-pago {
             background-color: #2b1a1a;
             color: #d4a44b;
             border: 1px solid rgba(212, 164, 75, 0.5);
             font-weight: bold;
         }
-        .select-mesa:focus {
+        .select-pago {
+            color: #20c997;
+        }
+        .select-mesa:focus, .select-pago:focus {
             background-color: #1f3d2b;
             color: #ffffff;
             border-color: #d4a44b;
             box-shadow: none;
+        }
+
+        /* TARJETAS KPI DE VENTAS */
+        .kpi-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 164, 75, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -185,9 +197,8 @@
                         <span>📋 Control Inventario</span>
                     </button>
 
-                    <button class="sidebar-btn opacity-75" onclick="alert('El módulo de Resumen de Ventas estará disponible próximamente.')">
+                    <button class="sidebar-btn" id="btn-sec-ventas" onclick="mostrarSeccion('seccion-ventas')">
                         <span>📊 Ventas</span>
-                        <span class="badge bg-secondary">Próximo</span>
                     </button>
                 </div>
             </div>
@@ -264,7 +275,8 @@
                                 <th>Detalle del Pedido</th>
                                 <th>Total</th>
                                 <th>Estado</th>
-                                <th>Mesa Asignada</th>
+                                <th>Mesa</th>
+                                <th>Medio de Pago</th> <!-- NUEVA COLUMNA -->
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -336,6 +348,56 @@
                 </div>
             </div>
 
+            <!-- SECCIÓN 4: RESUMEN Y REPORTES DE VENTAS -->
+            <div id="seccion-ventas" class="d-none">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="kpi-card shadow-sm">
+                            <h6 class="text-light opacity-75">💰 Total Ingresos</h6>
+                            <h3 class="text-gold fw-bold mb-0" id="kpi-ingresos">$0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card shadow-sm">
+                            <h6 class="text-light opacity-75">✅ Pedidos Vendidos</h6>
+                            <h3 class="text-success fw-bold mb-0" id="kpi-completados">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card shadow-sm">
+                            <h6 class="text-light opacity-75">📊 Ticket Medio</h6>
+                            <h3 class="text-info fw-bold mb-0" id="kpi-ticket">$0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kpi-card shadow-sm">
+                            <h6 class="text-light opacity-75">⏳ En Proceso / Cancelados</h6>
+                            <h3 class="text-warning fw-bold mb-0" id="kpi-pendientes">0 / 0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mb-4 text-gold">📜 Historial de Ventas Completadas</h4>
+                <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th># Pedido</th>
+                                <th>Cliente</th>
+                                <th>Detalle Platos</th>
+                                <th>Mesa</th>
+                                <th>Medio de Pago</th>
+                                <th>Monto Vendido</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-ventas">
+                            <!-- Carga dinámica -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -344,6 +406,7 @@
         const API_PLATOS = "http://localhost:8080/api/platos";
         const API_PEDIDOS = "http://localhost:8080/api/pedidos";
         const API_INVENTARIO = "http://localhost:8080/api/inventario";
+        const API_VENTAS = "http://localhost:8080/api/ventas/resumen";
 
         document.addEventListener("DOMContentLoaded", () => {
             const rol = localStorage.getItem("rol");
@@ -355,6 +418,7 @@
             cargarPlatos();
             cargarPedidos();
             cargarInventario();
+            cargarVentas();
         });
 
         function toggleSidebar() {
@@ -365,10 +429,12 @@
             document.getElementById("seccion-menu").classList.add("d-none");
             document.getElementById("seccion-pedidos").classList.add("d-none");
             document.getElementById("seccion-inventario").classList.add("d-none");
+            document.getElementById("seccion-ventas").classList.add("d-none");
 
             document.getElementById("btn-sec-menu").classList.remove("active");
             document.getElementById("btn-sec-pedidos").classList.remove("active");
             document.getElementById("btn-sec-inventario").classList.remove("active");
+            document.getElementById("btn-sec-ventas").classList.remove("active");
 
             document.getElementById(idSeccion).classList.remove("d-none");
 
@@ -383,6 +449,10 @@
             } else if (idSeccion === 'seccion-inventario') {
                 document.getElementById("btn-sec-inventario").classList.add("active");
                 tituloHeader.innerText = "📋 Control de Inventario";
+            } else if (idSeccion === 'seccion-ventas') {
+                document.getElementById("btn-sec-ventas").classList.add("active");
+                tituloHeader.innerText = "📊 Resumen de Ventas";
+                cargarVentas();
             }
         }
 
@@ -500,7 +570,7 @@
                 const tabla = document.getElementById("tabla-pedidos");
                 tabla.innerHTML = "";
                 if (pedidos.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
+                    tabla.innerHTML = `<tr><td colspan="8" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
                     return;
                 }
                 pedidos.forEach(p => {
@@ -520,10 +590,9 @@
                         badgeClass = "bg-danger"; accionesHTML = `<span class="text-danger small fw-bold">✖ Cancelado</span>`;
                     }
 
-                    // Mesa actual del pedido
                     const mesaActual = p.numeroMesa || "";
+                    const pagoActual = p.medioPago || "Efectivo";
 
-                    // Desplegable interactivo para asignar mesa
                     let selectMesaHTML = `
                         <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
                             <option value="" ${mesaActual === '' ? 'selected' : ''}>Sin asignar</option>
@@ -537,6 +606,16 @@
                         </select>
                     `;
 
+                    let selectPagoHTML = `
+                        <select class="form-select form-select-sm select-pago" onchange="asignarMedioPago(${p.id}, this.value)">
+                            <option value="Efectivo" ${pagoActual === 'Efectivo' ? 'selected' : ''}>💵 Efectivo</option>
+                            <option value="Tarjeta" ${pagoActual === 'Tarjeta' ? 'selected' : ''}>💳 Tarjeta</option>
+                            <option value="Nequi" ${pagoActual === 'Nequi' ? 'selected' : ''}>📱 Nequi</option>
+                            <option value="Daviplata" ${pagoActual === 'Daviplata' ? 'selected' : ''}>📱 Daviplata</option>
+                            <option value="Transferencia" ${pagoActual === 'Transferencia' ? 'selected' : ''}>🏦 Transferencia</option>
+                        </select>
+                    `;
+
                     tabla.innerHTML += `
                         <tr>
                             <td><strong>#${p.id}</strong></td>
@@ -544,7 +623,8 @@
                             <td>${p.detallePlatos}</td>
                             <td class="text-gold fw-bold">$${p.total}</td>
                             <td><span class="badge ${badgeClass}">${estado.replace('_', ' ')}</span></td>
-                            <td style="min-width: 130px;">${selectMesaHTML}</td>
+                            <td style="min-width: 120px;">${selectMesaHTML}</td>
+                            <td style="min-width: 140px;">${selectPagoHTML}</td>
                             <td class="text-center">${accionesHTML}</td>
                         </tr>`;
                 });
@@ -554,7 +634,10 @@
         async function cambiarEstadoPedido(id, nuevoEstado) {
             try {
                 const res = await fetch(`${API_PEDIDOS}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado: nuevoEstado }) });
-                if (res.ok) cargarPedidos();
+                if (res.ok) {
+                    cargarPedidos();
+                    cargarVentas();
+                }
             } catch (error) { console.error(error); }
         }
 
@@ -571,7 +654,24 @@
                 }
             } catch (error) {
                 console.error("Error al asignar mesa:", error);
-                alert("Error de conexión al guardar la mesa.");
+            }
+        }
+
+        async function asignarMedioPago(idPedido, nuevoPago) {
+            try {
+                const res = await fetch(`${API_PEDIDOS}/${idPedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ medioPago: nuevoPago })
+                });
+
+                if (res.ok) {
+                    cargarVentas(); // Actualizar la tabla de ventas si la pestaña se vuelve a abrir
+                } else {
+                    alert("No se pudo actualizar el medio de pago en el servidor.");
+                }
+            } catch (error) {
+                console.error("Error al asignar medio de pago:", error);
             }
         }
 
@@ -676,6 +776,46 @@
                 } catch (error) {
                     console.error("Error al eliminar insumo:", error);
                 }
+            }
+        }
+
+        /* LÓGICA DE VENTAS */
+        async function cargarVentas() {
+            try {
+                const res = await fetch(API_VENTAS);
+                if (!res.ok) return;
+                const datos = await res.json();
+
+                // Actualizar KPIs
+                document.getElementById("kpi-ingresos").innerText = `$${datos.totalIngresos.toLocaleString('es-CO')}`;
+                document.getElementById("kpi-completados").innerText = datos.totalPedidosCompletados;
+                document.getElementById("kpi-ticket").innerText = `$${Math.round(datos.ticketMedio).toLocaleString('es-CO')}`;
+                document.getElementById("kpi-pendientes").innerText = `${datos.totalPendientes} / ${datos.totalCancelados}`;
+
+                // Cargar tabla de ventas completadas
+                const tabla = document.getElementById("tabla-ventas");
+                tabla.innerHTML = "";
+
+                if (!datos.historialVentas || datos.historialVentas.length === 0) {
+                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay ventas completadas registradas.</td></tr>`;
+                    return;
+                }
+
+                datos.historialVentas.forEach(v => {
+                    tabla.innerHTML += `
+                        <tr>
+                            <td><strong>#${v.id}</strong></td>
+                            <td>${v.clienteEmail}</td>
+                            <td>${v.detallePlatos}</td>
+                            <td><span class="badge bg-primary">${v.numeroMesa || 'Sin Asignar'}</span></td>
+                            <td><span class="badge bg-info text-dark">${v.medioPago || 'Efectivo'}</span></td>
+                            <td class="text-gold fw-bold">$${v.total.toLocaleString('es-CO')}</td>
+                            <td><span class="badge bg-success">ENTREGADO</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al cargar módulo de ventas:", error);
             }
         }
     </script>

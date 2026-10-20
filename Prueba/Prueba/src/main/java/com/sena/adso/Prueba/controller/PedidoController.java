@@ -23,6 +23,9 @@ public class PedidoController {
         if (pedido.getEstado() == null || pedido.getEstado().isEmpty()) {
             pedido.setEstado("PENDIENTE");
         }
+        if (pedido.getMedioPago() == null || pedido.getMedioPago().isEmpty()) {
+            pedido.setMedioPago("Efectivo");
+        }
         Pedido nuevoPedido = pedidoRepository.save(pedido);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoPedido);
     }
@@ -47,6 +50,12 @@ public class PedidoController {
             if (body.containsKey("numeroMesa")) {
                 String nuevaMesa = body.get("numeroMesa");
                 pedido.setNumeroMesa(nuevaMesa);
+            }
+
+            // Actualizar medio de pago si viene en el JSON
+            if (body.containsKey("medioPago")) {
+                String nuevoMedioPago = body.get("medioPago");
+                pedido.setMedioPago(nuevoMedioPago);
             }
 
             Pedido pedidoActualizado = pedidoRepository.save(pedido);
