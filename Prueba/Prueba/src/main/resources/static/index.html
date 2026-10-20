@@ -3,119 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú del Restaurante - Panel Admin</title>
+    <title>Panel de Administración - Restaurante</title>
     <!-- CSS de Bootstrap y Estilos Corporativos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/estilos.css">
     <style>
-        .navbar-custom {
-            background: rgba(31, 61, 43, 0.85);
-            backdrop-filter: blur(8px);
+        body {
+            background: linear-gradient(135deg, #1f3d2b 0%, #2b1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT CON SIDEBAR */
+        .wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* MENÚ LATERAL (SIDEBAR) */
+        #sidebar {
+            min-width: 260px;
+            max-width: 260px;
+            background: rgba(20, 35, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(212, 164, 75, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        /* ESTADO COLAPSADO DEL SIDEBAR */
+        #sidebar.collapsed {
+            margin-left: -260px;
+        }
+
+        #sidebar .sidebar-header {
+            padding: 20px;
+            background: rgba(43, 26, 26, 0.85);
             border-bottom: 1px solid rgba(212, 164, 75, 0.3);
         }
+
+        #sidebar .components {
+            padding: 20px 10px;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            text-align: left;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #e0e0e0;
+            border: 1px solid transparent;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(212, 164, 75, 0.15);
+            color: #d4a44b;
+            border-color: rgba(212, 164, 75, 0.4);
+        }
+
+        .sidebar-btn.active {
+            background: #d4a44b !important;
+            color: #1a1a1a !important;
+            font-weight: bold;
+            border-color: #d4a44b;
+        }
+
+        /* BOTÓN PARA COLAPSAR SIDEBAR */
+        .btn-toggle-sidebar {
+            background: rgba(212, 164, 75, 0.2);
+            border: 1px solid rgba(212, 164, 75, 0.4);
+            color: #d4a44b;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toggle-sidebar:hover {
+            background: #d4a44b;
+            color: #1a1a1a;
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        #content {
+            width: 100%;
+            padding: 25px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* ESTILOS TARJETAS Y TABLAS */
         .card-custom {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(212, 164, 75, 0.3);
             color: white;
         }
         .card-custom .card-header {
-            background: rgba(43, 26, 26, 0.8);
+            background: rgba(43, 26, 26, 0.85);
             border-bottom: 1px solid rgba(212, 164, 75, 0.3);
         }
         .table-custom-container {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .btn-gold {
             background-color: #d4a44b;
-            color: #fff;
+            color: #1a1a1a;
             border: none;
+            font-weight: bold;
         }
         .btn-gold:hover {
             background-color: #b8892f;
-            color: #fff;
+            color: #ffffff;
         }
         .text-gold {
             color: #d4a44b !important;
+        }
+
+        /* ADAPTACIÓN PARA PANTALLAS PEQUEÑAS */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                z-index: 999;
+                height: 100vh;
+            }
+            #sidebar.collapsed {
+                margin-left: -260px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR: CERRAR SESIÓN -->
-    <nav class="navbar navbar-dark navbar-custom mb-4 sticky-top">
-        <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand fw-bold text-gold" href="#">🍽️ Restaurante (Admin)</a>
-            <a href="login.html" class="btn btn-outline-danger" role="button" onclick="cerrarSesion()">Cerrar Sesión</a>
-        </div>
-    </nav>
-
-    <div class="container">
-
-        <!-- FORMULARIO DE AGREGAR / EDITAR PLATO -->
-        <div class="card card-custom shadow-sm mb-5">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0 text-gold" id="titulo-form">➕ Agregar Nuevo Plato al Menú</h4>
-                <button type="button" class="btn btn-sm btn-outline-light" id="btn-cancelar-edicion" onclick="limpiarFormulario()" style="display: none;">Cancelar Edición</button>
-            </div>
-            <div class="card-body">
-                <form id="form-plato">
-                    <input type="hidden" id="plato-id">
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Nombre del Plato</label>
-                            <input type="text" id="nombre" class="form-control" placeholder="Ej: Bandeja Paisa" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Precio ($)</label>
-                            <input type="number" step="0.01" id="precio" class="form-control" placeholder="Ej: 25000" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-bold">URL o Nombre de la Imagen</label>
-                            <input type="text" id="imagen" class="form-control" placeholder="https://ejemplo.com/imagen.jpg o foto.jpg" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Descripción del Plato</label>
-                            <textarea id="descripcion" class="form-control" rows="2" placeholder="Ej: Delicioso plato típico..." required></textarea>
-                        </div>
+    <div class="wrapper">
+        <!-- MENÚ LATERAL IZQUIERDO (SIDEBAR) -->
+        <nav id="sidebar">
+            <div>
+                <div class="sidebar-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="text-gold fw-bold mb-0">🍽️ Restaurante</h4>
+                        <small class="text-light opacity-75">Panel de Control</small>
                     </div>
-                    <button type="submit" id="btn-guardar" class="btn btn-gold mt-3 w-100 fw-bold">
-                        Guardar Plato en el Menú
+                </div>
+
+                <div class="components">
+                    <button class="sidebar-btn active" id="btn-sec-menu" onclick="mostrarSeccion('seccion-menu')">
+                        <span>🍽️ Gestión del Menú</span>
                     </button>
-                </form>
+                    
+                    <button class="sidebar-btn" id="btn-sec-pedidos" onclick="mostrarSeccion('seccion-pedidos')">
+                        <span>📦 Pedidos y Mesas</span>
+                    </button>
+
+                    <button class="sidebar-btn opacity-75" onclick="alert('El módulo de Inventario estará disponible próximamente.')">
+                        <span>📦 Inventario</span>
+                        <span class="badge bg-secondary">Próximo</span>
+                    </button>
+
+                    <button class="sidebar-btn opacity-75" onclick="alert('El módulo de Resumen de Ventas estará disponible próximamente.')">
+                        <span>📊 Ventas</span>
+                        <span class="badge bg-secondary">Próximo</span>
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- CATÁLOGO DE PLATOS -->
-        <h3 class="mb-4 text-gold">📋 Platos Disponibles</h3>
-        <div id="contenedor-platos" class="row">
-            <!-- Los platos cargados desde la Base de Datos aparecerán aquí -->
-        </div>
+            <!-- BOTÓN CERRAR SESIÓN EN LA PARTE INFERIOR -->
+            <div class="p-3 border-top border-secondary">
+                <a href="login.html" class="btn btn-outline-danger w-100 fw-bold" role="button" onclick="cerrarSesion()">
+                    🚪 Cerrar Sesión
+                </a>
+            </div>
+        </nav>
 
-        <!-- TABLA DE PEDIDOS RECIBIDOS DESDE MYSQL -->
-        <hr class="my-5 border-secondary">
-        <h3 class="mb-4 text-gold">📦 Pedidos Recibidos</h3>
-        <div class="table-responsive table-custom-container p-3 rounded mb-5">
-            <table class="table table-dark table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Cliente</th>
-                        <th>Detalle del Pedido</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-pedidos">
-                    <!-- Los pedidos se cargan dinámicamente -->
-                </tbody>
-            </table>
-        </div>
+        <!-- ÁREA DE CONTENIDO PRINCIPAL (DERECHA) -->
+        <div id="content">
+            
+            <!-- BARRA SUPERIOR DE ACCIONES -->
+            <div class="d-flex align-items-center mb-4 gap-3">
+                <button class="btn-toggle-sidebar fw-bold" onclick="toggleSidebar()" title="Ocultar / Mostrar Menú">
+                    ☰ Menú
+                </button>
+                <h2 class="text-gold fw-bold mb-0" id="titulo-seccion-actual">🍽️ Gestión del Menú</h2>
+            </div>
+            
+            <!-- SECCIÓN 1: GESTIÓN DE PLATOS (MENÚ) -->
+            <div id="seccion-menu">
+                <!-- FORMULARIO DE AGREGAR / EDITAR PLATO -->
+                <div class="card card-custom shadow-sm mb-5">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-gold" id="titulo-form">➕ Agregar Nuevo Plato al Menú</h5>
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btn-cancelar-edicion" onclick="limpiarFormulario()" style="display: none;">Cancelar Edición</button>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-plato">
+                            <input type="hidden" id="plato-id">
 
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Nombre del Plato</label>
+                                    <input type="text" id="nombre" class="form-control" placeholder="Ej: Bandeja Paisa" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Precio ($)</label>
+                                    <input type="number" step="0.01" id="precio" class="form-control" placeholder="Ej: 25000" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold">URL o Nombre de la Imagen</label>
+                                    <input type="text" id="imagen" class="form-control" placeholder="https://ejemplo.com/imagen.jpg o foto.jpg" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Descripción del Plato</label>
+                                    <textarea id="descripcion" class="form-control" rows="2" placeholder="Ej: Delicioso plato típico..." required></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" id="btn-guardar" class="btn btn-gold mt-3 w-100 fw-bold">
+                                Guardar Plato en el Menú
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- CATÁLOGO DE PLATOS -->
+                <h4 class="mb-4 text-gold">📋 Platos Disponibles en la Carta</h4>
+                <div id="contenedor-platos" class="row">
+                    <!-- Carga dinámica -->
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: GESTIÓN DE PEDIDOS -->
+            <div id="seccion-pedidos" class="d-none">
+                <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cliente</th>
+                                <th>Detalle del Pedido</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-pedidos">
+                            <!-- Carga dinámica -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -134,6 +283,32 @@
             cargarPlatos();
             cargarPedidos();
         });
+
+        // FUNCIÓN PARA ABRIR Y CERRAR (COLAPSAR) EL SIDEBAR
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("collapsed");
+        }
+
+        // CONTROL DE NAVEGACIÓN ENTRE SECCIONES DESDE EL SIDEBAR
+        function mostrarSeccion(idSeccion) {
+            document.getElementById("seccion-menu").classList.add("d-none");
+            document.getElementById("seccion-pedidos").classList.add("d-none");
+
+            document.getElementById("btn-sec-menu").classList.remove("active");
+            document.getElementById("btn-sec-pedidos").classList.remove("active");
+
+            document.getElementById(idSeccion).classList.remove("d-none");
+
+            const tituloHeader = document.getElementById("titulo-seccion-actual");
+
+            if (idSeccion === 'seccion-menu') {
+                document.getElementById("btn-sec-menu").classList.add("active");
+                tituloHeader.innerText = "🍽️ Gestión del Menú";
+            } else if (idSeccion === 'seccion-pedidos') {
+                document.getElementById("btn-sec-pedidos").classList.add("active");
+                tituloHeader.innerText = "📦 Gestión de Pedidos";
+            }
+        }
 
         function cerrarSesion() {
             localStorage.clear();
