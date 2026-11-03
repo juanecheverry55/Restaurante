@@ -152,7 +152,6 @@
             text-align: center;
         }
 
-        /* ESTILOS PARA LOS BOTONES DE FILTRO DE CATEGORÍAS */
         .filtro-categoria-btn {
             background: rgba(0, 0, 0, 0.4);
             color: #d4a44b;
@@ -528,6 +527,31 @@
             window.location.replace("login.html");
         }
 
+        /* AUXILIAR: CALCULAR TIEMPO RESTANTE HASTA LA EXPIRACIÓN */
+        function calcularTiempoRestante(fechaExpiracionIso) {
+            if (!fechaExpiracionIso) return { texto: "Sin fecha", vencido: false };
+            const fechaExp = new Date(fechaExpiracionIso);
+            const ahora = new Date();
+            const diferenciaMs = fechaExp - ahora;
+
+            if (diferenciaMs <= 0) {
+                return { texto: "⚠️ ¡VENCIDO!", vencido: true };
+            }
+
+            const segundos = Math.floor(diferenciaMs / 1000);
+            const minutos = Math.floor(segundos / 60);
+            const horas = Math.floor(minutos / 60);
+            const dias = Math.floor(horas / 24);
+
+            if (dias > 0) {
+                return { texto: `Quedan ${dias} día(s)`, vencido: false };
+            } else if (horas > 0) {
+                return { texto: `Quedan ${horas} hora(s)`, vencido: false };
+            } else {
+                return { texto: `Quedan ${minutos} min`, vencido: false };
+            }
+        }
+
         /* LÓGICA DE PLATOS Y CATEGORÍAS */
         async function cargarPlatos() {
             try {
@@ -575,8 +599,6 @@
 
         function filtrarPorCategoria(cat, btnElement) {
             categoriaSeleccionada = cat;
-            
-            // Actualizar estilo visual de los botones de categoría
             document.querySelectorAll('.filtro-categoria-btn').forEach(b => b.classList.remove('active-cat'));
             btnElement.classList.add('active-cat');
 
@@ -656,11 +678,11 @@
             return `http://localhost:8080/uploads/${url}`;
         }
 
-        /* PEDIDOS, INVENTARIO Y VENTAS (MANTENIDOS) */
+        /* LÓGICA DE PEDIDOS Y MESAS */
         async function cargarPedidos() {
             try {
                 const res = await fetch(API_PEDIDOS);
-                if (!res.ok) return;
+                if (!res.ok) throw new Error("Error al obtener pedidos");
                 const pedidos = await res.json();
                 const tabla = document.getElementById("tabla-pedidos");
                 tabla.innerHTML = "";
@@ -685,6 +707,32 @@
                         badgeClass = "bg-danger"; accionesHTML = `<span class="text-danger small fw-bold">✖ Cancelado</span>`;
                     }
 
+                    const mesaActual = p.numeroMesa || "";
+                    const pagoActual = p.medioPago || "Efectivo";
+
+                    let selectMesaHTML = `
+                        <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
+                            <option value="" ${mesaActual === '' ? 'selected' : ''}>Sin asignar</option>
+                            <option value="Mesa 1" ${mesaActual === 'Mesa 1' ? 'selected' : ''}>Mesa 1</option>
+                            <option value="Mesa 2" ${mesaActual === 'Mesa 2' ? 'selected' : ''}>Mesa 2</option>
+                            <option value="Mesa 3" ${mesaActual === 'Mesa 3' ? 'selected' : ''}>Mesa 3</option>
+                            <option value="Mesa 4" ${mesaActual === 'Mesa 4' ? 'selected' : ''}>Mesa 4</option>
+                            <option value="Mesa 5" ${mesaActual === 'Mesa 5' ? 'selected' : ''}>Mesa 5</option>
+                            <option value="Barra" ${mesaActual === 'Barra' ? 'selected' : ''}>Barra</option>
+                            <option value="Para Llevar" ${mesaActual === 'Para Llevar' ? 'selected' : ''}>Para Llevar</option>
+                        </select>
+                    `;
+
+                    let selectPagoHTML = `
+                        <select class="form-select form-select-sm select-pago" onchange="asignarMedioPago(${p.id}, this.value)">
+                            <option value="Efectivo" ${pagoActual === 'Efectivo' ? 'selected' : ''}>💵 Efectivo</option>
+                            <option value="Tarjeta" ${pagoActual === 'Tarjeta' ? 'selected' : ''}>💳 Tarjeta</option>
+                            <option value="Nequi" ${pagoActual === 'Nequi' ? 'selected' : ''}>📱 Nequi</option>
+                            <option value="Daviplata" ${pagoActual === 'Daviplata' ? 'selected' : ''}>📱 Daviplata</option>
+                            <option value="Transferencia" ${pagoActual === 'Transferencia' ? 'selected' : ''}>🏦 Transferencia</option>
+                        </select>
+                    `;
+
                     tabla.innerHTML += `
                         <tr>
                             <td><strong>#${p.id}</strong></td>
@@ -692,8 +740,8 @@
                             <td>${p.detallePlatos}</td>
                             <td class="text-gold fw-bold">$${p.total}</td>
                             <td><span class="badge ${badgeClass}">${estado.replace('_', ' ')}</span></td>
-                            <td>${p.numeroMesa || 'Sin Asignar'}</td>
-                            <td>${p.medioPago || 'Efectivo'}</td>
+                            <td style="min-width: 120px;">${selectMesaHTML}</td>
+                            <td style="min-width: 140px;">${selectPagoHTML}</td>
                             <td class="text-center">${accionesHTML}</td>
                         </tr>`;
                 });
@@ -703,32 +751,78 @@
         async function cambiarEstadoPedido(id, nuevoEstado) {
             try {
                 const res = await fetch(`${API_PEDIDOS}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado: nuevoEstado }) });
-                if (res.ok) { cargarPedidos(); cargarVentas(); }
+                if (res.ok) {
+                    cargarPedidos();
+                    cargarVentas();
+                }
             } catch (error) { console.error(error); }
         }
 
+        async function asignarMesa(idPedido, nuevaMesa) {
+            try {
+                await fetch(`${API_PEDIDOS}/${idPedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ numeroMesa: nuevaMesa })
+                });
+            } catch (error) { console.error("Error al asignar mesa:", error); }
+        }
+
+        async function asignarMedioPago(idPedido, nuevoPago) {
+            try {
+                const res = await fetch(`${API_PEDIDOS}/${idPedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ medioPago: nuevoPago })
+                });
+                if (res.ok) { cargarVentas(); }
+            } catch (error) { console.error("Error al asignar medio de pago:", error); }
+        }
+
+        /* LÓGICA DE INVENTARIO CON CARGA Y FILTROS */
         async function cargarInventario() {
             try {
                 const res = await fetch(API_INVENTARIO);
                 if (!res.ok) return;
                 listaInventarioGlobal = await res.json();
                 renderizarInventario(listaInventarioGlobal);
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error("Error al cargar inventario:", error); }
         }
 
         function renderizarInventario(items) {
             const tabla = document.getElementById("tabla-inventario");
             tabla.innerHTML = "";
+
             if (!items || items.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="11" class="text-center text-light">No hay lotes en inventario.</td></tr>`;
+                tabla.innerHTML = `<tr><td colspan="11" class="text-center text-light">No se encontraron lotes en inventario.</td></tr>`;
                 return;
             }
+
             items.forEach(item => {
                 const itemJSON = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                 const bajoStock = item.cantidad <= item.stockMinimo;
-                const badgeStock = bajoStock ? `<span class="badge bg-danger">⚠️ Stock Bajo</span>` : `<span class="badge bg-success">Suficiente</span>`;
-                
-                let fechaExpFormateada = item.fechaExpiracion ? new Date(item.fechaExpiracion).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : "Sin fecha";
+                const badgeStock = bajoStock 
+                    ? `<span class="badge bg-danger">⚠️ Stock Bajo</span>` 
+                    : `<span class="badge bg-success">Suficiente</span>`;
+
+                let fechaExpFormateada = "Sin fecha";
+                let infoRestante = { texto: "Desconocido", vencido: false };
+                let badgeRestanteClass = "bg-secondary";
+
+                if (item.fechaExpiracion) {
+                    const fechaExpObj = new Date(item.fechaExpiracion);
+                    fechaExpFormateada = fechaExpObj.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+                    infoRestante = calcularTiempoRestante(item.fechaExpiracion);
+
+                    if (infoRestante.vencido) {
+                        badgeRestanteClass = "bg-danger";
+                    } else {
+                        badgeRestanteClass = "bg-info text-dark";
+                    }
+                }
+
+                const precioUnitario = item.precioUnitario || 0;
+                const valorTotal = item.valorTotal || (item.cantidad * precioUnitario);
 
                 tabla.innerHTML += `
                     <tr>
@@ -736,12 +830,12 @@
                         <td><span class="badge bg-dark border border-secondary">${item.codigoProducto || 'N/A'}</span></td>
                         <td><span class="badge bg-secondary">${item.numeroLote || 'N/A'}</span></td>
                         <td class="fw-bold">${item.nombreInsumo}</td>
-                        <td class="${bajoStock ? 'text-danger fw-bold' : 'text-light'}">${item.cantidad} ${item.unidadMedida}</td>
-                        <td>$${(item.precioUnitario || 0).toLocaleString('es-CO')}</td>
-                        <td class="text-gold fw-bold">$${(item.valorTotal || 0).toLocaleString('es-CO')}</td>
+                        <td class="${bajoStock ? 'text-danger fw-bold fs-6' : 'text-light'}">${item.cantidad} ${item.unidadMedida}</td>
+                        <td class="text-light">$${precioUnitario.toLocaleString('es-CO')}</td>
+                        <td class="text-gold fw-bold">$${valorTotal.toLocaleString('es-CO')}</td>
                         <td>${badgeStock}</td>
-                        <td class="small text-light">${fechaExpFormateada}</td>
-                        <td>-</td>
+                        <td class="small text-light opacity-75">${fechaExpFormateada}</td>
+                        <td><span class="badge ${badgeRestanteClass}">${infoRestante.texto}</span></td>
                         <td class="text-center">
                             <button class="btn btn-warning btn-sm me-1 fw-bold text-dark" onclick='prepararEdicionInv(${itemJSON})'>✏️ Editar</button>
                             <button class="btn btn-danger btn-sm fw-bold" onclick="eliminarInsumo(${item.id}, '${item.nombreInsumo}')">🗑️ Borrar</button>
@@ -750,15 +844,33 @@
             });
         }
 
+        /* FILTROS EN TIEMPO REAL PARA INVENTARIO */
         function aplicarFiltrosInventario() {
-            const texto = document.getElementById("filtro-texto").value.toLowerCase();
-            const estado = document.getElementById("filtro-estado").value;
-            const filtrados = listaInventarioGlobal.filter(i => {
-                const txtMatch = (i.nombreInsumo && i.nombreInsumo.toLowerCase().includes(texto)) || (i.codigoProducto && i.codigoProducto.toLowerCase().includes(texto));
-                if (!txtMatch) return false;
-                if (estado === "STOCK_BAJO") return i.cantidad <= i.stockMinimo;
+            const textoBusqueda = document.getElementById("filtro-texto").value.toLowerCase();
+            const estadoFiltro = document.getElementById("filtro-estado").value;
+
+            const filtrados = listaInventarioGlobal.filter(item => {
+                const coincideTexto = 
+                    (item.nombreInsumo && item.nombreInsumo.toLowerCase().includes(textoBusqueda)) ||
+                    (item.codigoProducto && item.codigoProducto.toLowerCase().includes(textoBusqueda)) ||
+                    (item.numeroLote && item.numeroLote.toLowerCase().includes(textoBusqueda));
+
+                if (!coincideTexto) return false;
+
+                const infoRestante = calcularTiempoRestante(item.fechaExpiracion);
+                const bajoStock = item.cantidad <= item.stockMinimo;
+
+                if (estadoFiltro === "VIGENTE") {
+                    return !infoRestante.vencido;
+                } else if (estadoFiltro === "VENCIDO") {
+                    return infoRestante.vencido;
+                } else if (estadoFiltro === "STOCK_BAJO") {
+                    return bajoStock;
+                }
+
                 return true;
             });
+
             renderizarInventario(filtrados);
         }
 
@@ -771,9 +883,14 @@
             document.getElementById("inv-unidad").value = item.unidadMedida;
             document.getElementById("inv-minimo").value = item.stockMinimo;
             document.getElementById("inv-precio").value = item.precioUnitario || 0;
-            if (item.fechaExpiracion) document.getElementById("inv-expiracion").value = item.fechaExpiracion.substring(0, 16);
+            
+            if (item.fechaExpiracion) {
+                document.getElementById("inv-expiracion").value = item.fechaExpiracion.substring(0, 16);
+            }
+
             document.getElementById("titulo-form-inv").innerText = "✏️ Editar Lote #" + item.id;
             document.getElementById("btn-guardar-inv").innerText = "Actualizar Lote";
+            document.getElementById("btn-guardar-inv").className = "btn btn-warning mt-3 w-100 fw-bold text-dark";
             document.getElementById("btn-cancelar-inv").style.display = "inline-block";
         }
 
@@ -782,69 +899,92 @@
             document.getElementById("inv-id").value = "";
             document.getElementById("titulo-form-inv").innerText = "📋 Registrar Lote de Insumo";
             document.getElementById("btn-guardar-inv").innerText = "Guardar Insumo en Inventario";
+            document.getElementById("btn-guardar-inv").className = "btn btn-gold mt-3 w-100 fw-bold";
             document.getElementById("btn-cancelar-inv").style.display = "none";
         }
 
         document.getElementById("form-inventario").addEventListener("submit", async (e) => {
             e.preventDefault();
             const id = document.getElementById("inv-id").value;
-            const cant = parseFloat(document.getElementById("inv-cantidad").value);
-            const precio = parseFloat(document.getElementById("inv-precio").value);
+            const cantidad = parseFloat(document.getElementById("inv-cantidad").value);
+            const precioUnitario = parseFloat(document.getElementById("inv-precio").value);
+
             const insumo = {
                 codigoProducto: document.getElementById("inv-codigo").value,
                 numeroLote: document.getElementById("inv-lote").value,
                 nombreInsumo: document.getElementById("inv-nombre").value,
-                cantidad: cant,
+                cantidad: cantidad,
                 unidadMedida: document.getElementById("inv-unidad").value,
                 stockMinimo: parseFloat(document.getElementById("inv-minimo").value),
-                precioUnitario: precio,
-                valorTotal: cant * precio,
+                precioUnitario: precioUnitario,
+                valorTotal: cantidad * precioUnitario,
                 fechaExpiracion: document.getElementById("inv-expiracion").value
             };
-            const metodo = id ? "PUT" : "POST";
-            const url = id ? `${API_INVENTARIO}/${id}` : API_INVENTARIO;
+
+            const esEdicion = Boolean(id);
+            const url = esEdicion ? `${API_INVENTARIO}/${id}` : API_INVENTARIO;
+            const metodo = esEdicion ? "PUT" : "POST";
+
             try {
-                const res = await fetch(url, { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(insumo) });
-                if (res.ok) { alert("¡Guardado con éxito!"); limpiarFormularioInv(); cargarInventario(); }
-            } catch (error) { console.error(error); }
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(insumo)
+                });
+
+                if (res.ok) {
+                    alert(esEdicion ? "¡Lote actualizado con éxito!" : "¡Lote registrado con éxito!");
+                    limpiarFormularioInv();
+                    cargarInventario();
+                } else {
+                    alert("Error al procesar la solicitud de inventario.");
+                }
+            } catch (error) { console.error("Error al guardar insumo:", error); }
         });
 
         async function eliminarInsumo(id, nombre) {
-            if (confirm(`¿Eliminar "${nombre}"?`)) {
-                const res = await fetch(`${API_INVENTARIO}/${id}`, { method: "DELETE" });
-                if (res.ok) cargarInventario();
+            if (confirm(`¿Estás seguro de eliminar este lote de "${nombre}"?`)) {
+                try {
+                    const res = await fetch(`${API_INVENTARIO}/${id}`, { method: "DELETE" });
+                    if (res.ok) cargarInventario();
+                } catch (error) { console.error("Error al eliminar insumo:", error); }
             }
         }
 
+        /* LÓGICA DE VENTAS */
         async function cargarVentas() {
             try {
                 const res = await fetch(API_VENTAS);
                 if (!res.ok) return;
                 const datos = await res.json();
-                document.getElementById("kpi-ingresos").innerText = `$${(datos.totalIngresos || 0).toLocaleString('es-CO')}`;
-                document.getElementById("kpi-completados").innerText = datos.totalPedidosCompletados || 0;
-                document.getElementById("kpi-ticket").innerText = `$${Math.round(datos.ticketMedio || 0).toLocaleString('es-CO')}`;
-                document.getElementById("kpi-pendientes").innerText = `${datos.totalPendientes || 0} / ${datos.totalCancelados || 0}`;
+
+                document.getElementById("kpi-ingresos").innerText = `$${datos.totalIngresos.toLocaleString('es-CO')}`;
+                document.getElementById("kpi-completados").innerText = datos.totalPedidosCompletados;
+                document.getElementById("kpi-ticket").innerText = `$${Math.round(datos.ticketMedio).toLocaleString('es-CO')}`;
+                document.getElementById("kpi-pendientes").innerText = `${datos.totalPendientes} / ${datos.totalCancelados}`;
 
                 const tabla = document.getElementById("tabla-ventas");
                 tabla.innerHTML = "";
+
                 if (!datos.historialVentas || datos.historialVentas.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay ventas registradas.</td></tr>`;
+                    tabla.innerHTML = `<tr><td colspan="7" class="text-center text-light">No hay ventas completadas registradas.</td></tr>`;
                     return;
                 }
+
                 datos.historialVentas.forEach(v => {
                     tabla.innerHTML += `
                         <tr>
                             <td><strong>#${v.id}</strong></td>
                             <td>${v.clienteEmail}</td>
                             <td>${v.detallePlatos}</td>
-                            <td>${v.numeroMesa || 'Sin Asignar'}</td>
-                            <td>${v.medioPago || 'Efectivo'}</td>
+                            <td><span class="badge bg-primary">${v.numeroMesa || 'Sin Asignar'}</span></td>
+                            <td><span class="badge bg-info text-dark">${v.medioPago || 'Efectivo'}</span></td>
                             <td class="text-gold fw-bold">$${v.total.toLocaleString('es-CO')}</td>
                             <td><span class="badge bg-success">ENTREGADO</span></td>
-                        </tr>`;
+                        </tr>
+                    `;
                 });
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error("Error al cargar módulo de ventas:", error); }
         }
     </script>
 </body>
