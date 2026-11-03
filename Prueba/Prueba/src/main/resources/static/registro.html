@@ -3,38 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Usuario - Restaurante</title>
-    <!-- CSS de Bootstrap y Estilos Corporativos -->
+    <title>Crear Cuenta - Restaurante</title>
+    <!-- CSS de Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/estilos.css">
     <style>
         body {
+            background: linear-gradient(135deg, #1f3d2b 0%, #2b1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
+            padding: 30px 0;
         }
 
-        .card-custom {
-            background: rgba(0, 0, 0, 0.45);
+        .card-register {
+            background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(212, 164, 75, 0.3);
+            border: 1px solid rgba(212, 164, 75, 0.4);
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-            color: white;
             padding: 30px;
             width: 100%;
-            max-width: 400px;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-gold {
+            color: #d4a44b !important;
         }
 
         .btn-gold {
             background-color: #d4a44b;
-            color: #ffffff;
+            color: #1a1a1a;
             border: none;
             font-weight: bold;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .btn-gold:hover {
@@ -42,87 +45,194 @@
             color: #ffffff;
         }
 
-        .text-gold {
-            color: #d4a44b !important;
+        .form-control, .form-select {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #ffffff;
+            border: 1px solid rgba(212, 164, 75, 0.4);
         }
 
-        .link-gold {
+        .form-control:focus, .form-select:focus {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            border-color: #d4a44b;
+            box-shadow: none;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-check-input {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(212, 164, 75, 0.6);
+        }
+
+        .form-check-input:checked {
+            background-color: #d4a44b;
+            border-color: #d4a44b;
+        }
+
+        a {
             color: #d4a44b;
             text-decoration: none;
-            font-weight: bold;
         }
 
-        .link-gold:hover {
-            color: #b8892f;
+        a:hover {
+            color: #fff;
             text-decoration: underline;
-        }
-
-        .form-control {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(212, 164, 75, 0.4);
-            color: #222;
-        }
-
-        .form-control:focus {
-            background: #ffffff;
-            border-color: #d4a44b;
-            box-shadow: 0 0 5px rgba(212, 164, 75, 0.5);
         }
     </style>
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body>
 
-    <div class="card card-custom shadow-lg p-4">
-        <h3 class="text-center mb-4 text-gold fw-bold">📝 Crear Cuenta</h3>
+    <div class="card-register shadow-lg">
+        <div class="text-center mb-4">
+            <h3 class="text-gold fw-bold">📝 Crear Cuenta</h3>
+            <p class="text-light opacity-75 small">Únete a nuestra experiencia gastronómica</p>
+        </div>
+
         <form id="form-registro">
             <div class="mb-3">
-                <label class="form-label fw-bold text-light">Nombre de Usuario</label>
-                <input type="text" id="nombreUsuario" class="form-control" placeholder="Tu nombre" required>
+                <label class="form-label fw-bold small">Nombre de Usuario</label>
+                <input type="text" id="reg-nombre" class="form-control" placeholder="Tu nombre" required>
             </div>
+
             <div class="mb-3">
-                <label class="form-label fw-bold text-light">Correo Electrónico</label>
-                <input type="email" id="email" class="form-control" placeholder="correo@ejemplo.com" required>
+                <label class="form-label fw-bold small">Correo Electrónico</label>
+                <input type="email" id="reg-email" class="form-control" placeholder="correo@ejemplo.com" required>
             </div>
+
             <div class="mb-3">
-                <label class="form-label fw-bold text-light">Contraseña</label>
-                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                <label class="form-label fw-bold small">Confirmar Correo Electrónico</label>
+                <input type="email" id="reg-email-confirm" class="form-control" placeholder="Repite tu correo electrónico" required>
             </div>
-            <button type="submit" class="btn btn-gold w-100 mb-3 py-2">Registrarse</button>
-            <div class="text-center">
-                <a href="login.html" class="link-gold small">¿Ya tienes cuenta? Inicia sesión</a>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Teléfono / WhatsApp</label>
+                <input type="tel" id="reg-telefono" class="form-control" placeholder="Ej: 3001234567" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Dirección de Entrega</label>
+                <input type="text" id="reg-direccion" class="form-control" placeholder="Ej: Calle 50 # 45-20, Apto 301" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Preferencias Alimentarias / Alergias</label>
+                <select id="reg-preferencias" class="form-select">
+                    <option value="Ninguna">Ninguna / Todo terreno</option>
+                    <option value="Vegetariano">🥗 Vegetariano</option>
+                    <option value="Vegano">🌱 Vegano</option>
+                    <option value="Sin Gluten">🌾 Sin Gluten</option>
+                    <option value="Alergia a Mariscos">🦐 Alergia a Mariscos</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Contraseña</label>
+                <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Confirmar Contraseña</label>
+                <input type="password" id="reg-password-confirm" class="form-control" placeholder="Repite tu contraseña" required>
+            </div>
+
+            <!-- CHECKBOX DE HABEAS DATA -->
+            <div class="mb-4 form-check">
+                <input type="checkbox" class="form-check-input" id="reg-habeas-data" required>
+                <label class="form-check-label text-light small" for="reg-habeas-data" style="font-size: 0.8rem; cursor: pointer;">
+                    Acepto la <a href="#" data-bs-toggle="modal" data-bs-target="#modalDatos" onclick="event.preventDefault()">política de tratamiento de datos personales</a>.
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-gold w-100 py-2 fw-bold">Registrarse</button>
+
+            <div class="text-center mt-3">
+                <small class="text-light">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></small>
             </div>
         </form>
     </div>
 
+    <!-- MODAL DE DATOS PERSONALES -->
+    <div class="modal fade" id="modalDatos" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light border border-warning">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-gold">Política de Manejo de Datos</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body small">
+                    <p>Tus datos personales serán utilizados exclusivamente para gestionar tus pedidos, domicilios y reservas en nuestro restaurante bajo estrictas normas de seguridad y privacidad.</p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-gold btn-sm" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
+        const API_REGISTRO = "http://localhost:8080/api/auth/registro";
+
         document.getElementById("form-registro").addEventListener("submit", async (e) => {
             e.preventDefault();
-            
-            const usuario = {
-                nombreUsuario: document.getElementById("nombreUsuario").value,
-                email: document.getElementById("email").value,
-                password: document.getElementById("password").value
+
+            const email = document.getElementById("reg-email").value;
+            const emailConfirm = document.getElementById("reg-email-confirm").value;
+            const password = document.getElementById("reg-password").value;
+            const passwordConfirm = document.getElementById("reg-password-confirm").value;
+
+            // Validación de coincidencia de correo electrónico
+            if (email !== emailConfirm) {
+                alert("⚠️ Los correos electrónicos no coinciden. Por favor, revísalos.");
+                document.getElementById("reg-email-confirm").focus();
+                return;
+            }
+
+            // Validación de coincidencia de contraseñas
+            if (password !== passwordConfirm) {
+                alert("⚠️ Las contraseñas no coinciden. Por favor, revísalas.");
+                document.getElementById("reg-password-confirm").focus();
+                return;
+            }
+
+            // Validación de aceptación de datos
+            const aceptaDatos = document.getElementById("reg-habeas-data").checked;
+            if (!aceptaDatos) {
+                alert("⚠️ Debes aceptar el tratamiento de datos personales para registrarte.");
+                return;
+            }
+
+            const nuevoUsuario = {
+                nombre: document.getElementById("reg-nombre").value,
+                email: email,
+                telefono: document.getElementById("reg-telefono").value,
+                direccion: document.getElementById("reg-direccion").value,
+                preferencias: document.getElementById("reg-preferencias").value,
+                password: password,
+                rol: "CLIENTE"
             };
 
             try {
-                // Apuntamos exacto a /api/auth/registro
-                const res = await fetch("http://localhost:8080/api/auth/registro", {
+                const res = await fetch(API_REGISTRO, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(usuario)
+                    body: JSON.stringify(nuevoUsuario)
                 });
 
                 if (res.ok) {
-                    alert("¡Usuario registrado con éxito como CLIENTE!");
+                    alert("¡Cuenta creada con éxito! Redirigiendo al inicio de sesión...");
                     window.location.href = "login.html";
                 } else {
-                    const mensajeError = await res.text();
-                    alert("Error: " + mensajeError);
+                    const errorMsg = await res.text();
+                    alert("No se pudo completar el registro: " + errorMsg);
                 }
-            } catch (err) {
-                console.error("Error de conexión:", err);
-                alert("No se pudo conectar con el servidor.");
+            } catch (error) {
+                console.error("Error de red:", error);
+                alert("Error al conectar con el servidor.");
             }
         });
     </script>
