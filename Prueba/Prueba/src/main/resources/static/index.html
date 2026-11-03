@@ -129,7 +129,7 @@
             color: #d4a44b !important;
         }
 
-        .select-mesa, .select-pago, .form-control, .form-select {
+        .select-mesa, .select-pago, .select-estado, .form-control, .form-select {
             background-color: rgba(0, 0, 0, 0.6);
             color: #ffffff;
             border: 1px solid rgba(212, 164, 75, 0.4);
@@ -291,17 +291,20 @@
 
             <!-- SECCIÓN 2: GESTIÓN DE PEDIDOS Y MESAS -->
             <div id="seccion-pedidos" class="d-none">
+                <h4 class="mb-4 text-gold">📦 Control Avanzado de Pedidos</h4>
                 <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
                     <table class="table table-dark table-hover align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Cliente</th>
-                                <th>Detalle del Pedido</th>
+                                <th>Correo</th>
+                                <th>Fecha y Hora</th>
+                                <th>Productos / Detalle</th>
                                 <th>Total</th>
                                 <th>Estado</th>
                                 <th>Mesa</th>
-                                <th>Medio de Pago</th>
+                                <th>Pago</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -510,6 +513,7 @@
             } else if (idSeccion === 'seccion-pedidos') {
                 document.getElementById("btn-sec-pedidos").classList.add("active");
                 tituloHeader.innerText = "📦 Gestión de Pedidos";
+                cargarPedidos();
             } else if (idSeccion === 'seccion-inventario') {
                 document.getElementById("btn-sec-inventario").classList.add("active");
                 tituloHeader.innerText = "📋 Control de Inventario";
@@ -678,7 +682,7 @@
             return `http://localhost:8080/uploads/${url}`;
         }
 
-        /* LÓGICA DE PEDIDOS Y MESAS */
+        /* LÓGICA AVANZADA DE PEDIDOS Y MESAS CON BOTÓN DESPLEGABLE DE PRODUCTOS */
         async function cargarPedidos() {
             try {
                 const res = await fetch(API_PEDIDOS);
@@ -686,29 +690,32 @@
                 const pedidos = await res.json();
                 const tabla = document.getElementById("tabla-pedidos");
                 tabla.innerHTML = "";
+                
                 if (pedidos.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="8" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
+                    tabla.innerHTML = `<tr><td colspan="10" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
                     return;
                 }
+
                 pedidos.forEach(p => {
-                    const estado = (p.estado || "PENDIENTE").toUpperCase();
-                    let badgeClass = "bg-warning text-dark";
-                    let accionesHTML = "";
-
-                    if (estado === "PENDIENTE") {
-                        badgeClass = "bg-warning text-dark";
-                        accionesHTML = `<button class="btn btn-sm btn-primary me-1" onclick="cambiarEstadoPedido(${p.id}, 'EN_PREPARACION')">👨‍🍳 Enviar a Cocina</button><button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">❌ Cancelar</button>`;
-                    } else if (estado === "EN_PREPARACION") {
-                        badgeClass = "bg-info text-dark";
-                        accionesHTML = `<button class="btn btn-sm btn-success me-1" onclick="cambiarEstadoPedido(${p.id}, 'ENTREGADO')">✅ Marcar Entregado</button><button class="btn btn-sm btn-outline-danger" onclick="cambiarEstadoPedido(${p.id}, 'CANCELADO')">❌</button>`;
-                    } else if (estado === "ENTREGADO") {
-                        badgeClass = "bg-success"; accionesHTML = `<span class="text-success small fw-bold">✔ Completado</span>`;
-                    } else if (estado === "CANCELADO") {
-                        badgeClass = "bg-danger"; accionesHTML = `<span class="text-danger small fw-bold">✖ Cancelado</span>`;
-                    }
-
+                    const estadoActual = (p.estado || "PENDIENTE").toUpperCase();
                     const mesaActual = p.numeroMesa || "";
                     const pagoActual = p.medioPago || "Efectivo";
+                    
+                    let fechaFormateada = "Reciente";
+                    if (p.fecha || p.fechaCreacion) {
+                        const fechaObj = new Date(p.fecha || p.fechaCreacion);
+                        fechaFormateada = fechaObj.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+                    }
+
+                    let selectEstadoHTML = `
+                        <select class="form-select form-select-sm select-estado" onchange="actualizarEstadoDinamico(${p.id}, this.value)">
+                            <option value="PENDIENTE" ${estadoActual === 'PENDIENTE' ? 'selected' : ''}>⏳ Pendiente</option>
+                            <option value="PREPARANDO" ${estadoActual === 'PREPARANDO' ? 'selected' : ''}>👨‍🍳 Preparando</option>
+                            <option value="LISTO" ${estadoActual === 'LISTO' ? 'selected' : ''}>🔔 Listo</option>
+                            <option value="ENTREGADO" ${estadoActual === 'ENTREGADO' ? 'selected' : ''}>✅ Entregado</option>
+                            <option value="REEMBOLSADO" ${estadoActual === 'REEMBOLSADO' ? 'selected' : ''}>🔄 Reembolsado</option>
+                        </select>
+                    `;
 
                     let selectMesaHTML = `
                         <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
@@ -733,29 +740,61 @@
                         </select>
                     `;
 
+                    let detallePlatosBruto = p.detallePlatos || "Sin detalles";
+                    let itemsArray = detallePlatosBruto.split(',');
+                    let listaProductosHTML = '<ul class="mb-0 ps-3 small text-light">';
+                    itemsArray.forEach(item => {
+                        listaProductosHTML += `<li>${item.trim()}</li>`;
+                    });
+                    listaProductosHTML += '</ul>';
+
+                    let idColapsable = `detalle-${p.id}`;
+
+                    let nombreCliente = p.nombreCliente || (p.clienteEmail ? p.clienteEmail.split('@')[0] : 'Cliente');
+                    nombreCliente = nombreCliente.charAt(0).toUpperCase() + nombreCliente.slice(1);
+                    let correoCliente = p.clienteEmail || 'No registrado';
+
                     tabla.innerHTML += `
                         <tr>
                             <td><strong>#${p.id}</strong></td>
-                            <td>${p.clienteEmail}</td>
-                            <td>${p.detallePlatos}</td>
-                            <td class="text-gold fw-bold">$${p.total}</td>
-                            <td><span class="badge ${badgeClass}">${estado.replace('_', ' ')}</span></td>
+                            <td class="fw-bold text-light">${nombreCliente}</td>
+                            <td class="small text-light opacity-75">${correoCliente}</td>
+                            <td class="small text-light opacity-75">${fechaFormateada}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-warning py-1 px-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#${idColapsable}">
+                                    🛒 Ver Productos ▼
+                                </button>
+                                <div class="collapse mt-2" id="${idColapsable}">
+                                    <div class="card card-body bg-black text-light p-2 small border border-secondary shadow-sm">
+                                        ${listaProductosHTML}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-gold fw-bold">$${(p.total || 0).toLocaleString('es-CO')}</td>
+                            <td style="min-width: 140px;">${selectEstadoHTML}</td>
                             <td style="min-width: 120px;">${selectMesaHTML}</td>
-                            <td style="min-width: 140px;">${selectPagoHTML}</td>
-                            <td class="text-center">${accionesHTML}</td>
+                            <td style="min-width: 130px;">${selectPagoHTML}</td>
+                            <td class="text-center" style="min-width: 120px;">
+                                <button class="btn btn-sm btn-warning mb-1 fw-bold text-dark w-100" onclick="imprimirFactura(${p.id}, '${nombreCliente}', '${detallePlatosBruto}', ${p.total})" title="Imprimir Factura">
+                                    🖨️ Factura
+                                </button>
+                            </td>
                         </tr>`;
                 });
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error("Error al cargar pedidos:", error); }
         }
 
-        async function cambiarEstadoPedido(id, nuevoEstado) {
+        async function actualizarEstadoDinamico(idPedido, nuevoEstado) {
             try {
-                const res = await fetch(`${API_PEDIDOS}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado: nuevoEstado }) });
+                const res = await fetch(`${API_PEDIDOS}/${idPedido}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
                 if (res.ok) {
-                    cargarPedidos();
                     cargarVentas();
                 }
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error("Error al cambiar estado:", error); }
         }
 
         async function asignarMesa(idPedido, nuevaMesa) {
@@ -777,6 +816,124 @@
                 });
                 if (res.ok) { cargarVentas(); }
             } catch (error) { console.error("Error al asignar medio de pago:", error); }
+        }
+
+        function imprimirFactura(id, cliente, detalle, total) {
+            let itemsArray = detalle.split(',');
+            let filasProductosHTML = '';
+            
+            itemsArray.forEach(item => {
+                filasProductosHTML += `
+                    <tr>
+                        <td style="padding: 4px 0; border-bottom: 1px dotted #ccc;">${item.trim()}</td>
+                        <td style="padding: 4px 0; border-bottom: 1px dotted #ccc; text-align: right;">$</td>
+                    </tr>
+                `;
+            });
+
+            const ventanaImpresion = window.open('', '_blank', 'width=400,height=600');
+            ventanaImpresion.document.write(`
+                <html>
+                    <head>
+                        <title>Factura de Venta #${id}</title>
+                        <style>
+                            body {
+                                font-family: 'Courier New', Courier, monospace;
+                                font-size: 12px;
+                                color: #000;
+                                width: 300px;
+                                margin: 0 auto;
+                                padding: 10px;
+                                background-color: #fff;
+                            }
+                            .header {
+                                text-align: center;
+                                border-bottom: 1px dashed #000;
+                                padding-bottom: 10px;
+                                margin-bottom: 10px;
+                            }
+                            .header h3 {
+                                margin: 0 0 5px 0;
+                                font-size: 16px;
+                            }
+                            .info-pedido {
+                                margin-bottom: 10px;
+                                font-size: 11px;
+                                border-bottom: 1px dashed #000;
+                                padding-bottom: 8px;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 10px;
+                            }
+                            th {
+                                text-align: left;
+                                border-bottom: 1px solid #000;
+                                padding-bottom: 4px;
+                            }
+                            .total-section {
+                                border-top: 1px solid #000;
+                                padding-top: 5px;
+                                text-align: right;
+                                font-size: 14px;
+                                font-weight: bold;
+                            }
+                            .footer {
+                                text-align: center;
+                                margin-top: 20px;
+                                font-size: 10px;
+                                border-top: 1px dashed #000;
+                                padding-top: 10px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h3>🍽️ RESTAURANTE GOURMET</h3>
+                            <p>NIT: 900.123.456-7<br>
+                            Medellín, Colombia<br>
+                            Tel: 300 000 0000</p>
+                        </div>
+                        
+                        <div class="info-pedido">
+                            <p><strong>Factura N°:</strong> ${id}</p>
+                            <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-CO')}</p>
+                            <p><strong>Cliente:</strong> ${cliente}</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th style="text-align: right;">Cant/Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasProductosHTML}
+                            </tbody>
+                        </table>
+
+                        <div class="total-section">
+                            TOTAL: $${total.toLocaleString('es-CO')}
+                        </div>
+
+                        <div class="footer">
+                            <p>¡Gracias por su compra!<br>
+                            Conserve este tiquete para cualquier reclamo.<br>
+                            Software de Gestión - Restaurante Panel</p>
+                        </div>
+
+                        <script>
+                            window.onload = function() { 
+                                window.print(); 
+                                window.close(); 
+                            }
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            ventanaImpresion.document.close();
         }
 
         /* LÓGICA DE INVENTARIO CON CARGA Y FILTROS */
@@ -844,7 +1001,6 @@
             });
         }
 
-        /* FILTROS EN TIEMPO REAL PARA INVENTARIO */
         function aplicarFiltrosInventario() {
             const textoBusqueda = document.getElementById("filtro-texto").value.toLowerCase();
             const estadoFiltro = document.getElementById("filtro-estado").value;
