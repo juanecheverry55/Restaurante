@@ -27,6 +27,10 @@ public class Pedido {
 
     private LocalDateTime fecha = LocalDateTime.now();
 
+    // Campo transitorio para inyectar el nombre del cliente obtenido de la tabla usuarios
+    @Transient
+    private String nombreCliente;
+
     public Pedido() {
     }
 
@@ -62,4 +66,7 @@ public class Pedido {
 
     public LocalDateTime getFecha() { return fecha; }
     public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+
+    public String getNombreCliente() { return nombreCliente; }
+    public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
 }

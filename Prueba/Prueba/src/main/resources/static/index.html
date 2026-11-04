@@ -292,6 +292,50 @@
             <!-- SECCIÓN 2: GESTIÓN DE PEDIDOS Y MESAS -->
             <div id="seccion-pedidos" class="d-none">
                 <h4 class="mb-4 text-gold">📦 Control Avanzado de Pedidos</h4>
+                
+                <!-- BARRA DE FILTROS COMPLETA PARA PEDIDOS -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <input type="text" id="filtro-pedido-texto" class="form-control" placeholder="🔍 Buscar cliente, correo o plato..." onkeyup="aplicarFiltrosPedidos()">
+                    </div>
+                    <div class="col-md-3">
+                        <select id="filtro-pedido-estado" class="form-select" onchange="aplicarFiltrosPedidos()">
+                            <option value="TODOS">📋 Todos los estados</option>
+                            <option value="PENDIENTE">⏳ Pendiente</option>
+                            <option value="PREPARANDO">👨‍🍳 Preparando</option>
+                            <option value="LISTO">🔔 Listo</option>
+                            <option value="ENTREGADO">✅ Entregado</option>
+                            <option value="REEMBOLSADO">🔄 Reembolsado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filtro-pedido-mesa" class="form-select" onchange="aplicarFiltrosPedidos()">
+                            <option value="TODOS">🪑 Todas las mesas</option>
+                            <option value="Mesa 1">Mesa 1</option>
+                            <option value="Mesa 2">Mesa 2</option>
+                            <option value="Mesa 3">Mesa 3</option>
+                            <option value="Mesa 4">Mesa 4</option>
+                            <option value="Mesa 5">Mesa 5</option>
+                            <option value="Barra">Barra</option>
+                            <option value="Para Llevar">Para Llevar</option>
+                            <option value="Sin asignar">Sin asignar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filtro-pedido-pago" class="form-select" onchange="aplicarFiltrosPedidos()">
+                            <option value="TODOS">💳 Todos los pagos</option>
+                            <option value="Efectivo">💵 Efectivo</option>
+                            <option value="Tarjeta">💳 Tarjeta</option>
+                            <option value="Nequi">📱 Nequi</option>
+                            <option value="Daviplata">📱 Daviplata</option>
+                            <option value="Transferencia">🏦 Transferencia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-light w-100 fw-bold" onclick="limpiarFiltrosPedidos()">🔄 Limpiar</button>
+                    </div>
+                </div>
+
                 <div class="table-responsive table-custom-container p-3 rounded mb-5 shadow">
                     <table class="table table-dark table-hover align-middle mb-0">
                         <thead>
@@ -472,6 +516,7 @@
 
         let listaPlatosGlobal = [];
         let listaInventarioGlobal = [];
+        let listaPedidosGlobal = []; // Arreglo global para almacenar los pedidos y filtrar localmente con velocidad
         let categoriaSeleccionada = "TODOS";
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -682,106 +727,157 @@
             return `http://localhost:8080/uploads/${url}`;
         }
 
-        /* LÓGICA AVANZADA DE PEDIDOS Y MESAS CON BOTÓN DESPLEGABLE DE PRODUCTOS */
+        /* LÓGICA DE PEDIDOS Y SISTEMA DE FILTROS AVANZADOS */
         async function cargarPedidos() {
             try {
                 const res = await fetch(API_PEDIDOS);
                 if (!res.ok) throw new Error("Error al obtener pedidos");
-                const pedidos = await res.json();
-                const tabla = document.getElementById("tabla-pedidos");
-                tabla.innerHTML = "";
+                listaPedidosGlobal = await res.json();
+                renderizarPedidos(listaPedidosGlobal);
+            } catch (error) { console.error("Error al cargar pedidos:", error); }
+        }
+
+        function renderizarPedidos(pedidos) {
+            const tabla = document.getElementById("tabla-pedidos");
+            tabla.innerHTML = "";
+            
+            if (!pedidos || pedidos.length === 0) {
+                tabla.innerHTML = `<tr><td colspan="10" class="text-center text-light">No se encontraron pedidos con los filtros aplicados.</td></tr>`;
+                return;
+            }
+
+            pedidos.forEach(p => {
+                const estadoActual = (p.estado || "PENDIENTE").toUpperCase();
+                const mesaActual = p.numeroMesa || "";
+                const pagoActual = p.medioPago || "Efectivo";
                 
-                if (pedidos.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="10" class="text-center text-light">No hay pedidos registrados aún.</td></tr>`;
-                    return;
+                let fechaFormateada = "Reciente";
+                if (p.fecha || p.fechaCreacion) {
+                    const fechaObj = new Date(p.fecha || p.fechaCreacion);
+                    fechaFormateada = fechaObj.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
                 }
 
-                pedidos.forEach(p => {
-                    const estadoActual = (p.estado || "PENDIENTE").toUpperCase();
-                    const mesaActual = p.numeroMesa || "";
-                    const pagoActual = p.medioPago || "Efectivo";
-                    
-                    let fechaFormateada = "Reciente";
-                    if (p.fecha || p.fechaCreacion) {
-                        const fechaObj = new Date(p.fecha || p.fechaCreacion);
-                        fechaFormateada = fechaObj.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-                    }
+                let selectEstadoHTML = `
+                    <select class="form-select form-select-sm select-estado" onchange="actualizarEstadoDinamico(${p.id}, this.value)">
+                        <option value="PENDIENTE" ${estadoActual === 'PENDIENTE' ? 'selected' : ''}>⏳ Pendiente</option>
+                        <option value="PREPARANDO" ${estadoActual === 'PREPARANDO' ? 'selected' : ''}>👨‍🍳 Preparando</option>
+                        <option value="LISTO" ${estadoActual === 'LISTO' ? 'selected' : ''}>🔔 Listo</option>
+                        <option value="ENTREGADO" ${estadoActual === 'ENTREGADO' ? 'selected' : ''}>✅ Entregado</option>
+                        <option value="REEMBOLSADO" ${estadoActual === 'REEMBOLSADO' ? 'selected' : ''}>🔄 Reembolsado</option>
+                    </select>
+                `;
 
-                    let selectEstadoHTML = `
-                        <select class="form-select form-select-sm select-estado" onchange="actualizarEstadoDinamico(${p.id}, this.value)">
-                            <option value="PENDIENTE" ${estadoActual === 'PENDIENTE' ? 'selected' : ''}>⏳ Pendiente</option>
-                            <option value="PREPARANDO" ${estadoActual === 'PREPARANDO' ? 'selected' : ''}>👨‍🍳 Preparando</option>
-                            <option value="LISTO" ${estadoActual === 'LISTO' ? 'selected' : ''}>🔔 Listo</option>
-                            <option value="ENTREGADO" ${estadoActual === 'ENTREGADO' ? 'selected' : ''}>✅ Entregado</option>
-                            <option value="REEMBOLSADO" ${estadoActual === 'REEMBOLSADO' ? 'selected' : ''}>🔄 Reembolsado</option>
-                        </select>
-                    `;
+                let selectMesaHTML = `
+                    <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
+                        <option value="" ${mesaActual === '' ? 'selected' : ''}>Sin asignar</option>
+                        <option value="Mesa 1" ${mesaActual === 'Mesa 1' ? 'selected' : ''}>Mesa 1</option>
+                        <option value="Mesa 2" ${mesaActual === 'Mesa 2' ? 'selected' : ''}>Mesa 2</option>
+                        <option value="Mesa 3" ${mesaActual === 'Mesa 3' ? 'selected' : ''}>Mesa 3</option>
+                        <option value="Mesa 4" ${mesaActual === 'Mesa 4' ? 'selected' : ''}>Mesa 4</option>
+                        <option value="Mesa 5" ${mesaActual === 'Mesa 5' ? 'selected' : ''}>Mesa 5</option>
+                        <option value="Barra" ${mesaActual === 'Barra' ? 'selected' : ''}>Barra</option>
+                        <option value="Para Llevar" ${mesaActual === 'Para Llevar' ? 'selected' : ''}>Para Llevar</option>
+                    </select>
+                `;
 
-                    let selectMesaHTML = `
-                        <select class="form-select form-select-sm select-mesa" onchange="asignarMesa(${p.id}, this.value)">
-                            <option value="" ${mesaActual === '' ? 'selected' : ''}>Sin asignar</option>
-                            <option value="Mesa 1" ${mesaActual === 'Mesa 1' ? 'selected' : ''}>Mesa 1</option>
-                            <option value="Mesa 2" ${mesaActual === 'Mesa 2' ? 'selected' : ''}>Mesa 2</option>
-                            <option value="Mesa 3" ${mesaActual === 'Mesa 3' ? 'selected' : ''}>Mesa 3</option>
-                            <option value="Mesa 4" ${mesaActual === 'Mesa 4' ? 'selected' : ''}>Mesa 4</option>
-                            <option value="Mesa 5" ${mesaActual === 'Mesa 5' ? 'selected' : ''}>Mesa 5</option>
-                            <option value="Barra" ${mesaActual === 'Barra' ? 'selected' : ''}>Barra</option>
-                            <option value="Para Llevar" ${mesaActual === 'Para Llevar' ? 'selected' : ''}>Para Llevar</option>
-                        </select>
-                    `;
+                let selectPagoHTML = `
+                    <select class="form-select form-select-sm select-pago" onchange="asignarMedioPago(${p.id}, this.value)">
+                        <option value="Efectivo" ${pagoActual === 'Efectivo' ? 'selected' : ''}>💵 Efectivo</option>
+                        <option value="Tarjeta" ${pagoActual === 'Tarjeta' ? 'selected' : ''}>💳 Tarjeta</option>
+                        <option value="Nequi" ${pagoActual === 'Nequi' ? 'selected' : ''}>📱 Nequi</option>
+                        <option value="Daviplata" ${pagoActual === 'Daviplata' ? 'selected' : ''}>📱 Daviplata</option>
+                        <option value="Transferencia" ${pagoActual === 'Transferencia' ? 'selected' : ''}>🏦 Transferencia</option>
+                    </select>
+                `;
 
-                    let selectPagoHTML = `
-                        <select class="form-select form-select-sm select-pago" onchange="asignarMedioPago(${p.id}, this.value)">
-                            <option value="Efectivo" ${pagoActual === 'Efectivo' ? 'selected' : ''}>💵 Efectivo</option>
-                            <option value="Tarjeta" ${pagoActual === 'Tarjeta' ? 'selected' : ''}>💳 Tarjeta</option>
-                            <option value="Nequi" ${pagoActual === 'Nequi' ? 'selected' : ''}>📱 Nequi</option>
-                            <option value="Daviplata" ${pagoActual === 'Daviplata' ? 'selected' : ''}>📱 Daviplata</option>
-                            <option value="Transferencia" ${pagoActual === 'Transferencia' ? 'selected' : ''}>🏦 Transferencia</option>
-                        </select>
-                    `;
-
-                    let detallePlatosBruto = p.detallePlatos || "Sin detalles";
-                    let itemsArray = detallePlatosBruto.split(',');
-                    let listaProductosHTML = '<ul class="mb-0 ps-3 small text-light">';
-                    itemsArray.forEach(item => {
-                        listaProductosHTML += `<li>${item.trim()}</li>`;
-                    });
-                    listaProductosHTML += '</ul>';
-
-                    let idColapsable = `detalle-${p.id}`;
-
-                    let nombreCliente = p.nombreCliente || (p.clienteEmail ? p.clienteEmail.split('@')[0] : 'Cliente');
-                    nombreCliente = nombreCliente.charAt(0).toUpperCase() + nombreCliente.slice(1);
-                    let correoCliente = p.clienteEmail || 'No registrado';
-
-                    tabla.innerHTML += `
-                        <tr>
-                            <td><strong>#${p.id}</strong></td>
-                            <td class="fw-bold text-light">${nombreCliente}</td>
-                            <td class="small text-light opacity-75">${correoCliente}</td>
-                            <td class="small text-light opacity-75">${fechaFormateada}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning py-1 px-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#${idColapsable}">
-                                    🛒 Ver Productos ▼
-                                </button>
-                                <div class="collapse mt-2" id="${idColapsable}">
-                                    <div class="card card-body bg-black text-light p-2 small border border-secondary shadow-sm">
-                                        ${listaProductosHTML}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="text-gold fw-bold">$${(p.total || 0).toLocaleString('es-CO')}</td>
-                            <td style="min-width: 140px;">${selectEstadoHTML}</td>
-                            <td style="min-width: 120px;">${selectMesaHTML}</td>
-                            <td style="min-width: 130px;">${selectPagoHTML}</td>
-                            <td class="text-center" style="min-width: 120px;">
-                                <button class="btn btn-sm btn-warning mb-1 fw-bold text-dark w-100" onclick="imprimirFactura(${p.id}, '${nombreCliente}', '${detallePlatosBruto}', ${p.total})" title="Imprimir Factura">
-                                    🖨️ Factura
-                                </button>
-                            </td>
-                        </tr>`;
+                let detallePlatosBruto = p.detallePlatos || "Sin detalles";
+                let itemsArray = detallePlatosBruto.split(',');
+                let listaProductosHTML = '<ul class="mb-0 ps-3 small text-light">';
+                itemsArray.forEach(item => {
+                    listaProductosHTML += `<li>${item.trim()}</li>`;
                 });
-            } catch (error) { console.error("Error al cargar pedidos:", error); }
+                listaProductosHTML += '</ul>';
+
+                let idColapsable = `detalle-${p.id}`;
+                let nombreCliente = p.nombreCliente || p.nombre || 'Cliente';
+                let correoCliente = p.clienteEmail || p.email || 'No registrado';
+
+                tabla.innerHTML += `
+                    <tr>
+                        <td><strong>#${p.id}</strong></td>
+                        <td class="fw-bold text-light">${nombreCliente}</td>
+                        <td class="small text-light opacity-75">${correoCliente}</td>
+                        <td class="small text-light opacity-75">${fechaFormateada}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning py-1 px-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#${idColapsable}">
+                                🛒 Ver Productos ▼
+                            </button>
+                            <div class="collapse mt-2" id="${idColapsable}">
+                                <div class="card card-body bg-black text-light p-2 small border border-secondary shadow-sm">
+                                    ${listaProductosHTML}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-gold fw-bold">$${(p.total || 0).toLocaleString('es-CO')}</td>
+                        <td style="min-width: 140px;">${selectEstadoHTML}</td>
+                        <td style="min-width: 120px;">${selectMesaHTML}</td>
+                        <td style="min-width: 130px;">${selectPagoHTML}</td>
+                        <td class="text-center" style="min-width: 120px;">
+                            <button class="btn btn-sm btn-warning mb-1 fw-bold text-dark w-100" onclick="imprimirFactura(${p.id}, '${nombreCliente}', '${detallePlatosBruto}', ${p.total})" title="Imprimir Factura">
+                                🖨️ Factura
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function aplicarFiltrosPedidos() {
+            const textoBusqueda = document.getElementById("filtro-pedido-texto").value.toLowerCase();
+            const estadoFiltro = document.getElementById("filtro-pedido-estado").value;
+            const mesaFiltro = document.getElementById("filtro-pedido-mesa").value;
+            const pagoFiltro = document.getElementById("filtro-pedido-pago").value;
+
+            const filtrados = listaPedidosGlobal.filter(p => {
+                const nombre = (p.nombreCliente || p.nombre || "").toLowerCase();
+                const correo = (p.clienteEmail || p.email || "").toLowerCase();
+                const platos = (p.detallePlatos || "").toLowerCase();
+
+                // Coincidencia de texto (nombre, correo o productos)
+                const coincideTexto = nombre.includes(textoBusqueda) || correo.includes(textoBusqueda) || platos.includes(textoBusqueda);
+                if (!coincideTexto) return false;
+
+                // Coincidencia de Estado
+                if (estadoFiltro !== "TODOS" && (p.estado || "PENDIENTE").toUpperCase() !== estadoFiltro) {
+                    return false;
+                }
+
+                // Coincidencia de Mesa
+                if (mesaFiltro !== "TODOS") {
+                    const mesaActual = p.numeroMesa || "";
+                    if (mesaFiltro === "Sin asignar") {
+                        if (mesaActual !== "") return false;
+                    } else {
+                        if (mesaActual !== mesaFiltro) return false;
+                    }
+                }
+
+                // Coincidencia de Medio de Pago
+                if (pagoFiltro !== "TODOS" && (p.medioPago || "Efectivo") !== pagoFiltro) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            renderizarPedidos(filtrados);
+        }
+
+        function limpiarFiltrosPedidos() {
+            document.getElementById("filtro-pedido-texto").value = "";
+            document.getElementById("filtro-pedido-estado").value = "TODOS";
+            document.getElementById("filtro-pedido-mesa").value = "TODOS";
+            document.getElementById("filtro-pedido-pago").value = "TODOS";
+            renderizarPedidos(listaPedidosGlobal);
         }
 
         async function actualizarEstadoDinamico(idPedido, nuevoEstado) {
@@ -792,6 +888,9 @@
                     body: JSON.stringify({ estado: nuevoEstado })
                 });
                 if (res.ok) {
+                    // Actualizar el estado en la lista local para mantener los filtros activos
+                    const pedidoLocal = listaPedidosGlobal.find(p => p.id === idPedido);
+                    if (pedidoLocal) pedidoLocal.estado = nuevoEstado;
                     cargarVentas();
                 }
             } catch (error) { console.error("Error al cambiar estado:", error); }
@@ -799,11 +898,15 @@
 
         async function asignarMesa(idPedido, nuevaMesa) {
             try {
-                await fetch(`${API_PEDIDOS}/${idPedido}`, {
+                const res = await fetch(`${API_PEDIDOS}/${idPedido}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ numeroMesa: nuevaMesa })
                 });
+                if (res.ok) {
+                    const pedidoLocal = listaPedidosGlobal.find(p => p.id === idPedido);
+                    if (pedidoLocal) pedidoLocal.numeroMesa = nuevaMesa;
+                }
             } catch (error) { console.error("Error al asignar mesa:", error); }
         }
 
@@ -814,7 +917,11 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ medioPago: nuevoPago })
                 });
-                if (res.ok) { cargarVentas(); }
+                if (res.ok) { 
+                    const pedidoLocal = listaPedidosGlobal.find(p => p.id === idPedido);
+                    if (pedidoLocal) pedidoLocal.medioPago = nuevoPago;
+                    cargarVentas(); 
+                }
             } catch (error) { console.error("Error al asignar medio de pago:", error); }
         }
 

@@ -1,7 +1,9 @@
 package com.sena.adso.Prueba.controller;
 
 import com.sena.adso.Prueba.model.Pedido;
+import com.sena.adso.Prueba.model.Usuario;
 import com.sena.adso.Prueba.repository.PedidoRepository;
+import com.sena.adso.Prueba.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -17,6 +20,9 @@ public class PedidoController {
 
     @Autowired
     private PedidoRepository pedidoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @PostMapping
     public ResponseEntity<?> crearPedido(@RequestBody Pedido pedido) {
@@ -32,7 +38,23 @@ public class PedidoController {
 
     @GetMapping
     public List<Pedido> listarPedidos() {
-        return pedidoRepository.findAll();
+        List<Pedido> pedidos = pedidoRepository.findAll();
+        
+        // Como findByEmail retorna Optional<Usuario>, manejamos el resultado de forma segura
+        for (Pedido pedido : pedidos) {
+            if (pedido.getClienteEmail() != null && !pedido.getClienteEmail().isEmpty()) {
+                Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(pedido.getClienteEmail());
+                if (usuarioOpt.isPresent() && usuarioOpt.get().getNombre() != null) {
+                    pedido.setNombreCliente(usuarioOpt.get().getNombre());
+                } else {
+                    pedido.setNombreCliente("Cliente no registrado");
+                }
+            } else {
+                pedido.setNombreCliente("Sin correo");
+            }
+        }
+        
+        return pedidos;
     }
 
     @PutMapping("/{id}")
@@ -59,6 +81,13 @@ public class PedidoController {
             }
 
             Pedido pedidoActualizado = pedidoRepository.save(pedido);
+
+            // Inyectamos también el nombre en la respuesta de actualización
+            if (pedidoActualizado.getClienteEmail() != null) {
+                Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(pedidoActualizado.getClienteEmail());
+                usuarioOpt.ifPresent(usuario -> pedidoActualizado.setNombreCliente(usuario.getNombre()));
+            }
+
             return ResponseEntity.ok(pedidoActualizado);
         }).orElse(ResponseEntity.notFound().build());
     }
